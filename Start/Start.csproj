@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Reimbit\Reimbit.Application\Reimbit.Application.csproj" />
+    <ProjectReference Include="..\Reimbit\Reimbit.Contracts\Reimbit.Contracts.csproj" />
+    <ProjectReference Include="..\Reimbit\Reimbit.Core\Reimbit.Core.csproj" />
+    <ProjectReference Include="..\Reimbit\Reimbit.Domain\Reimbit.Domain.csproj" />
+    <ProjectReference Include="..\Reimbit\Reimbit.Infrastructure\Reimbit.Infrastructure.csproj" />
+    <ProjectReference Include="..\Reimbit\Reimbit.Web\Reimbit.Web.csproj" />
+  </ItemGroup>
+
+</Project>

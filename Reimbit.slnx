@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Reimbit/">
+    <Project Path="Reimbit/Reimbit.Application/Reimbit.Application.csproj" Id="7d18450b-bd20-449d-b550-f6a35e5e1389" />
+    <Project Path="Reimbit/Reimbit.Contracts/Reimbit.Contracts.csproj" Id="c062abec-1a8f-425f-840a-f3f9cfe915ed" />
+    <Project Path="Reimbit/Reimbit.Core/Reimbit.Core.csproj" Id="bc50280e-344b-494c-befc-d7ae6df5d123" />
+    <Project Path="Reimbit/Reimbit.Domain/Reimbit.Domain.csproj" Id="85a64442-9db9-49f8-8af6-730f28370fda" />
+    <Project Path="Reimbit/Reimbit.Infrastructure/Reimbit.Infrastructure.csproj" Id="c2481685-1644-4888-988c-1628259cb41c" />
+    <Project Path="Reimbit/Reimbit.Web/Reimbit.Web.csproj" Id="67f53189-a758-4c2a-9686-0dc609c8db65" />
+  </Folder>
+  <Project Path="Start/Start.csproj" />
+</Solution>
