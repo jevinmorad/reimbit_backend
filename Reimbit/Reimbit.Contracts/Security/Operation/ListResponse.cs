@@ -1,5 +1,5 @@
-using Common.NetStandard.Data.Models;
-using Common.NetCore.RequestEncryption;
+using AegisInt.Core;
+using Common.Data.Models;
 
 namespace GNLib.Contracts.Security.Operation;
 

@@ -1,4 +1,4 @@
-﻿using Reimbit.Core.Common.NetStandard.Data.Models;
+﻿using Common.Data.Models;
 
 namespace Reimbit.Contracts.Security.Role;
 
@@ -11,5 +11,5 @@ public class RolePermissionResponseItem
 {
 	public int ModuleId { get; set; }
 	public string ModuleName { get; set; }
-	public List<OptionResponse> Permissions { get; set; }
+	public List<OptionsResponse<int>> Permissions { get; set; }
 }

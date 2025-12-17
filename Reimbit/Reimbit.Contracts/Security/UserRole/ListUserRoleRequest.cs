@@ -1,4 +1,4 @@
-﻿using Reimbit.Core.Common.NetStandard.Web.Models;
+﻿using Common.Web.Models;
 
 namespace GNLib.Contracts.Security;
 

@@ -1,10 +1,11 @@
-using Common.NetCore.RequestEncryption;
+
+using AegisInt.Core;
 
 namespace GNLib.Contracts.Security.Operation;
 
 public class InsertRequest
 {
-    public NullableEncryptedInt OperationID { get; set; }
+    public EncryptedInt? OperationID { get; set; }
     public EncryptedInt ModuleID { get; set; }
     public EncryptedInt SubModuleID { get; set; }
     public int OperationNo { get; set; }

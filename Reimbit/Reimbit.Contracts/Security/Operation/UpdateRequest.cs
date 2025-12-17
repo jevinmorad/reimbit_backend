@@ -1,4 +1,4 @@
-using Common.NetCore.RequestEncryption;
+using AegisInt.Core;
 
 namespace GNLib.Contracts.Security.Operation;
 
