@@ -6,7 +6,7 @@ public class UserGetResponse
 {
     public EncryptedInt? UserID { get; set; }
     public string DisplayName { get; set; }
-    public  EncryptedInt Role { get; set; }
+    public  EncryptedInt RoleID { get; set; }
     public int CreatedByUserID { get; set; }
     public int ModifiedByUserID { get; set; }
     public string UserName { get; set; }
