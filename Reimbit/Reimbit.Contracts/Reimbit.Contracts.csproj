@@ -70,4 +70,8 @@
     <ProjectReference Include="..\Reimbit.Core\Reimbit.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Policies\" />
+  </ItemGroup>
+
 </Project>

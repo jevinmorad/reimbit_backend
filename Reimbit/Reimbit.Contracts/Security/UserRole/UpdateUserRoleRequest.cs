@@ -1,8 +1,8 @@
 ﻿using AegisInt.Core;
 
-namespace GNLib.Contracts.Security;
+namespace Reimbit.Contracts.Security.UserRole;
 
-public class UpdateUserRoleRequest
+public class UpdateRequest
 {
 	public required EncryptedInt UserID { get; set; }
 	public required EncryptedInt RoleID { get; set; }

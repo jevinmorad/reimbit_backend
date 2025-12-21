@@ -1,6 +1,6 @@
 using Common.Web.Models;
 
-namespace GNLib.Contracts.Security.Operation;
+namespace Reimbit.Contracts.Security.Operation;
 
 public class ListRequest : PagedRequest
 {

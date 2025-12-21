@@ -5,52 +5,56 @@ using System.Security.Claims;
 
 namespace Reimbit.Web.Security;
 
-public class CurrentUserProvider : ICurrentUserProvider
+public class CurrentUserProvider(IHttpContextAccessor httpContextAccessor) : ICurrentUserProvider
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public CurrentUserProvider(IHttpContextAccessor httpContextAccessor) => _httpContextAccessor = httpContextAccessor;
-
-    private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
+    private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     public int GetUserId()
     {
         var userIdClaim = User?.FindFirstValue("userId");
-        return int.TryParse(userIdClaim, out int userId) ? userId : 0;
+        return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 
     public int GetOrganizationId()
     {
-        var orgIdClaim = User?.FindFirstValue("orgId");
-        return int.TryParse(orgIdClaim, out int orgId) ? orgId : 0;
+        var organizationIdClaim = User?.FindFirstValue("organizationId");
+        return int.TryParse(organizationIdClaim, out var organizationId) ? organizationId : 0;
     }
 
     public int? GetUserRoleId()
     {
-        var roleIdClaim = User?.FindFirstValue(ClaimTypes.Role);
-        return int.TryParse(roleIdClaim, out int roleId) ? roleId : null;
+        var roleIdClaim = User?.FindFirstValue("roleId");
+        return int.TryParse(roleIdClaim, out var roleId) ? roleId : null;
     }
 
     public string GetUserEmail()
     {
-        return User?.FindFirstValue(ClaimTypes.Email)!;
+        return User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
     }
 
     public CurrentUser<TokenData> GetCurrentUser<TModel>()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        var user = httpContextAccessor.HttpContext?.User;
 
-        if (user == null || !user.Identity?.IsAuthenticated == true)
-            return new CurrentUser<TokenData>(default!);
+        //if (user == null || user.Identity is not { IsAuthenticated: true })
+        //{
+        //    return new CurrentUser<TokenData>(default, default, default!);
+        //}
 
         var tokenData = new TokenData
         {
-            UserId = int.Parse(user.FindFirstValue("userId") ?? "0"),
-            OrganizationId = int.Parse(user.FindFirstValue("orgId") ?? "0"),
-            Email = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
-            RoleId = int.Parse(user.FindFirstValue(ClaimTypes.Role) ?? "0")
+            UserId = int.TryParse(user?.FindFirstValue("userId"), out var userId)
+                ? userId
+                : 0,
+            OrganizationId = int.TryParse(user?.FindFirstValue("organizationId"), out var organizationId)
+                ? organizationId
+                : 0,
+            Email = user?.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
+            RoleId = int.TryParse(user?.FindFirstValue("roleId"), out var roleId)
+                ? roleId
+                : 0
         };
 
-        return new CurrentUser<TokenData>(tokenData);
+        return new CurrentUser<TokenData>(tokenData.UserId, tokenData.OrganizationId, tokenData);
     }
 }

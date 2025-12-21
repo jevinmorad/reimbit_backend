@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AegisInt.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Reimbit.Domain.Interfaces;
 using Reimbit.Domain.Models;
 
@@ -9,6 +10,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
+    }
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.UseAegisIntEncryption();
     }
 
     // Security

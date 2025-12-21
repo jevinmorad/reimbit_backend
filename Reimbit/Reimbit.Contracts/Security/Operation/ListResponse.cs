@@ -1,7 +1,7 @@
 using AegisInt.Core;
 using Common.Data.Models;
 
-namespace GNLib.Contracts.Security.Operation;
+namespace Reimbit.Contracts.Security.Operation;
 
 public class ListResponse : ListItemBase
 {

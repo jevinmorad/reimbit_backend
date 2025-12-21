@@ -27,6 +27,8 @@ public static class InfrastructureConfiguration
 
         // Repositories
         services.AddScoped<IAccountRepository, AccountRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IProjectRepository, ProjectRepository>();
 
         return services;
     }

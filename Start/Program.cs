@@ -1,3 +1,4 @@
+using AegisInt.Core;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Reimbit.Application;
@@ -7,6 +8,14 @@ using Reimbit.Web;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// EncryptedInt services
+builder.Services.AddAegisInt(options =>
+{
+    options.Salt = "my-super-secret-production-salt"; // Required
+    options.Alphabet = "aGbIJK3VWXYcfgmn14opL!MNO#Sqr2D-FEstuhBC9ijk67lvPQRw5dTUexy8zAHZ0"; // optional
+    options.MinLength = 6; // optional
+});
 
 // Add services to the container.
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -25,8 +34,8 @@ builder.Services
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key),
-            ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
             ValidIssuer = jwt.Issuer,
             ValidAudience = jwt.Audience,
             ClockSkew = TimeSpan.Zero

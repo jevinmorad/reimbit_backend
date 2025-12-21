@@ -23,4 +23,8 @@
     <ProjectReference Include="..\Reimbit.Domain\Reimbit.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Projects\Policies\" />
+  </ItemGroup>
+
 </Project>

@@ -20,8 +20,8 @@ public class JwtTokenService : IJwtTokenService
         {
             new("userId", user.UserId.ToString() ?? string.Empty),
             new(ClaimTypes.Email, user.Email ?? string.Empty),
-            new("orgId", user.OrganizationId.ToString()),
-            new(ClaimTypes.Role, user.RoleId?.ToString() ?? string.Empty)
+            new("organizationId", user.OrganizationId.ToString()),
+            new("roleId", user.RoleId?.ToString() ?? string.Empty)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
@@ -32,6 +32,7 @@ public class JwtTokenService : IJwtTokenService
             audience: _jwtSettings.Audience,
             claims: claims,
             notBefore: DateTime.UtcNow,
+            expires: DateTime.UtcNow.AddDays(3),
             signingCredentials: creds
         );
 

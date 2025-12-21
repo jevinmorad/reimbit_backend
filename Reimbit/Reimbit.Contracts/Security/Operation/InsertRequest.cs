@@ -1,7 +1,7 @@
 
 using AegisInt.Core;
 
-namespace GNLib.Contracts.Security.Operation;
+namespace Reimbit.Contracts.Security.Operation;
 
 public class InsertRequest
 {

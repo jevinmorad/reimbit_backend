@@ -1,11 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Reflection;
 
-namespace Reimbit.Core.Common.Extension;
+namespace Common.Extension;
 
 public static class ServiceExtensions
 {

@@ -1,8 +1,8 @@
 ﻿using Common.Data.Models;
 
-namespace GNLib.Contracts.Security;
+namespace Reimbit.Contracts.Security.UserRole;
 
-public class ListUserRoleResponse : ListItemBase
+public class ListResponse : ListItemBase
 {
 	public string UserName { get; set; }
 	public string UserRoleName { get; set; }

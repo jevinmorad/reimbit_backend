@@ -1,8 +1,8 @@
 ﻿using Common.Web.Models;
 
-namespace GNLib.Contracts.Security;
+namespace Reimbit.Contracts.Security.UserRole;
 
-public class ListUserRoleRequest : PagedRequest
+public class ListRequest : PagedRequest
 {
     public int? UserID { get; set; }
     public int? RoleID { get; set; }

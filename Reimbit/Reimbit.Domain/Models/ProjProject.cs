@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Reimbit.Domain.Models;
+﻿namespace Reimbit.Domain.Models;
 
 public partial class ProjProject
 {
