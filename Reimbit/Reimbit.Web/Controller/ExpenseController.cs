@@ -101,4 +101,22 @@ public class ExpenseController(
         var result = await service.View(id);
         return result.Match(_ => Ok(result.Value), Problem);
     }
+
+    [HttpPost("accept")]
+    [Produces<OperationResponse<EncryptedInt>>]
+    [EndpointSummary("Accept expense")]
+    public async Task<IActionResult> Accept([FromBody] AcceptExpenseRequest request)
+    {
+        var result = await service.Accept(request);
+        return result.Match(_ => Ok(result.Value), Problem);
+    }
+
+    [HttpPost("reject")]
+    [Produces<OperationResponse<EncryptedInt>>]
+    [EndpointSummary("Reject expense")]
+    public async Task<IActionResult> Reject([FromBody] RejectExpenseRequest request)
+    {
+        var result = await service.Reject(request);
+        return result.Match(_ => Ok(result.Value), Problem);
+    }
 }

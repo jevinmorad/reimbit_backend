@@ -368,4 +368,132 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
 
         return expense;
     }
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(AcceptExpenseRequest request)
+    {
+        var response = new OperationResponse<EncryptedInt>();
+        var dbContext = (DbContext)context;
+
+        await using var tx = await dbContext.Database.BeginTransactionAsync();
+
+        try
+        {
+            int id = request.ExpenseId;
+            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == id);
+
+            if (expense == null)
+            {
+                return Error.NotFound("Expense.NotFound", "Expense not found");
+            }
+
+            if (expense.ExpenseStatus != "submitted")
+            {
+                return Error.Validation("Expense.Accept.NotAllowed", "Only submitted expenses can be accepted.");
+            }
+
+            expense.ExpenseStatus = "accepted";
+            expense.ModifiedByUserId = request.ModifiedByUserId;
+            expense.Modified = DateTime.UtcNow;
+
+            var logExpense = new LogExpExpense
+            {
+                Iud = "U",
+                IuddateTime = DateTime.UtcNow,
+                IudbyUserId = request.ModifiedByUserId,
+                ExpenseId = expense.ExpenseId,
+                OrganizationId = expense.OrganizationId,
+                UserId = expense.UserId,
+                ProjectId = expense.ProjectId,
+                CategoryId = expense.CategoryId,
+                Title = expense.Title,
+                Amount = expense.Amount,
+                Currency = expense.Currency,
+                AttachmentUrl = expense.AttachmentUrl,
+                Description = expense.Description,
+                ExpenseStatus = expense.ExpenseStatus,
+                CreatedByUserId = expense.CreatedByUserId,
+                ModifiedByUserId = expense.ModifiedByUserId,
+                Created = expense.Created,
+                Modified = expense.Modified
+            };
+
+            await context.LogExpExpenses.AddAsync(logExpense);
+            await context.SaveChangesAsync(default);
+
+            await tx.CommitAsync();
+
+            response.Id = expense.ExpenseId;
+            return response;
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            return Error.Failure("Expense.Accept.Failed", ex.Message);
+        }
+    }
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Reject(RejectExpenseRequest request)
+    {
+        var response = new OperationResponse<EncryptedInt>();
+        var dbContext = (DbContext)context;
+
+        await using var tx = await dbContext.Database.BeginTransactionAsync();
+
+        try
+        {
+            int id = request.ExpenseId;
+            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == id);
+
+            if (expense == null)
+            {
+                return Error.NotFound("Expense.NotFound", "Expense not found");
+            }
+
+            if (expense.ExpenseStatus != "submitted")
+            {
+                return Error.Validation("Expense.Reject.NotAllowed", "Only submitted expenses can be rejected.");
+            }
+
+            expense.ExpenseStatus = "rejected";
+            expense.RejectionReason = request.RejectionReason;
+            expense.ModifiedByUserId = request.ModifiedByUserId;
+            expense.Modified = DateTime.UtcNow;
+
+            var logExpense = new LogExpExpense
+            {
+                Iud = "U",
+                IuddateTime = DateTime.UtcNow,
+                IudbyUserId = request.ModifiedByUserId,
+                ExpenseId = expense.ExpenseId,
+                OrganizationId = expense.OrganizationId,
+                UserId = expense.UserId,
+                ProjectId = expense.ProjectId,
+                CategoryId = expense.CategoryId,
+                Title = expense.Title,
+                Amount = expense.Amount,
+                Currency = expense.Currency,
+                AttachmentUrl = expense.AttachmentUrl,
+                Description = expense.Description,
+                ExpenseStatus = expense.ExpenseStatus,
+                RejectionReason = expense.RejectionReason,
+                CreatedByUserId = expense.CreatedByUserId,
+                ModifiedByUserId = expense.ModifiedByUserId,
+                Created = expense.Created,
+                Modified = expense.Modified
+            };
+
+            await context.LogExpExpenses.AddAsync(logExpense);
+            await context.SaveChangesAsync(default);
+
+            await tx.CommitAsync();
+
+            response.Id = expense.ExpenseId;
+            return response;
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            return Error.Failure("Expense.Reject.Failed", ex.Message);
+        }
+    }
 }

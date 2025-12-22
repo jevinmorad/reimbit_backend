@@ -17,6 +17,5 @@ public class GetExpenseResponse
     public string? Description { get; set; }
     public string ExpenseStatus { get; set; }
     public string? RejectionReason { get; set; }
-    [JsonIgnore]
     public DateTime Created { get; set; }
 }
