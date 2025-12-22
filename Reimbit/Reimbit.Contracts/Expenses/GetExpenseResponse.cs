@@ -1,5 +1,4 @@
 ﻿using AegisInt.Core;
-using System.Text.Json.Serialization;
 
 namespace Reimbit.Contracts.Expenses;
 

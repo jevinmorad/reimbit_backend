@@ -1,4 +1,5 @@
 ﻿using AegisInt.Core;
+using System.Text.Json.Serialization;
 
 namespace Reimbit.Contracts.Policies;
 
@@ -10,6 +11,8 @@ public class UpdatePolicyRequest
     public decimal? MaxAmount { get; set; }
     public bool IsReceiptMandatory { get; set; }
     public string? Description { get; set; }
+    [JsonIgnore]
     public int ModifiedByUserId { get; set; }
+    [JsonIgnore]
     public DateTime Modified { get; set; }
 }

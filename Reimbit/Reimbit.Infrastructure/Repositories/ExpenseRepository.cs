@@ -369,7 +369,7 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
         return expense;
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(AcceptExpenseRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(EncryptedInt ExpenseId, int modifiedByUserId)
     {
         var response = new OperationResponse<EncryptedInt>();
         var dbContext = (DbContext)context;
@@ -378,7 +378,7 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
 
         try
         {
-            int id = request.ExpenseId;
+            int id = ExpenseId;
             var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == id);
 
             if (expense == null)
@@ -392,14 +392,14 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
             }
 
             expense.ExpenseStatus = "accepted";
-            expense.ModifiedByUserId = request.ModifiedByUserId;
+            expense.ModifiedByUserId = modifiedByUserId;
             expense.Modified = DateTime.UtcNow;
 
             var logExpense = new LogExpExpense
             {
                 Iud = "U",
                 IuddateTime = DateTime.UtcNow,
-                IudbyUserId = request.ModifiedByUserId,
+                IudbyUserId = modifiedByUserId,
                 ExpenseId = expense.ExpenseId,
                 OrganizationId = expense.OrganizationId,
                 UserId = expense.UserId,

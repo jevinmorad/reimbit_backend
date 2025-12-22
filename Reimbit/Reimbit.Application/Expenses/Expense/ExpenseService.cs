@@ -72,10 +72,9 @@ public class ExpenseService(
         return await repository.View(expenseId);
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(AcceptExpenseRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(EncryptedInt ExpenseId)
     {
-        request.ModifiedByUserId = currentUser.UserId;
-        return await repository.Accept(request);
+        return await repository.Accept(ExpenseId, currentUser.UserId);
     }
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Reject(RejectExpenseRequest request)

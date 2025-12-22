@@ -102,12 +102,12 @@ public class ExpenseController(
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
-    [HttpPost("accept")]
+    [HttpPost("accept/{id}")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Accept expense")]
-    public async Task<IActionResult> Accept([FromBody] AcceptExpenseRequest request)
+    public async Task<IActionResult> Accept([FromRoute] EncryptedInt id)
     {
-        var result = await service.Accept(request);
+        var result = await service.Accept(id);
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
