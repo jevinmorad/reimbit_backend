@@ -18,41 +18,41 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     }
 
     // Security
-    public DbSet<SecUser> SecUsers { get; set; } = default!;
-    public DbSet<SecUserAuth> SecUserAuths { get; set; } = default!;
-    public DbSet<SecUserRole> SecUserRoles { get; set; } = default!;
-    public DbSet<SecRole> SecRoles { get; set; } = default!;
-    public DbSet<SecRoleClaim> SecRoleClaims { get; set; } = default!;
-    public DbSet<SecOperation> SecOperations { get; set; } = default!;
+    public DbSet<SecUser> SecUsers { get; set; } 
+    public DbSet<SecUserAuth> SecUserAuths { get; set; } 
+    public DbSet<SecUserRole> SecUserRoles { get; set; } 
+    public DbSet<SecRole> SecRoles { get; set; } 
+    public DbSet<SecRoleClaim> SecRoleClaims { get; set; } 
+    public DbSet<SecOperation> SecOperations { get; set; } 
 
     // Organization / Projects
-    public DbSet<OrgOrganization> OrgOrganizations { get; set; } = default!;
-    public DbSet<ProjProject> ProjProjects { get; set; } = default!;
-    public DbSet<ProjProjectMember> ProjProjectMembers { get; set; } = default!;
-    public DbSet<ProjExpensePolicy> ProjExpensePolicies { get; set; } = default!;
+    public DbSet<OrgOrganization> OrgOrganizations { get; set; } 
+    public DbSet<ProjProject> ProjProjects { get; set; } 
+    public DbSet<ProjProjectMember> ProjProjectMembers { get; set; } 
+    public DbSet<ProjExpensePolicy> ProjExpensePolicies { get; set; } 
 
     // Expenses
-    public DbSet<ExpCategory> ExpCategories { get; set; } = default!;
-    public DbSet<ExpExpense> ExpExpenses { get; set; } = default!;
-    public DbSet<ExpReport> ExpReports { get; set; } = default!;
-    public DbSet<ComExpenseQuery> ComExpenseQueries { get; set; } = default!;
+    public DbSet<ExpCategory> ExpCategories { get; set; } 
+    public DbSet<ExpExpense> ExpExpenses { get; set; } 
+    public DbSet<ExpReport> ExpReports { get; set; } 
+    public DbSet<ComExpenseQuery> ComExpenseQueries { get; set; } 
 
     // Logs
-    public DbSet<LogComExpenseQuery> LogComExpenseQueries { get; set; } = default!;
-    public DbSet<LogErrorDbm> LogErrorDbms { get; set; } = default!;
-    public DbSet<LogExpCategory> LogExpCategories { get; set; } = default!;
-    public DbSet<LogExpExpense> LogExpExpenses { get; set; } = default!;
-    public DbSet<LogExpReport> LogExpReports { get; set; } = default!;
-    public DbSet<LogOrgOrganization> LogOrgOrganizations { get; set; } = default!;
-    public DbSet<LogProjProject> LogProjProjects { get; set; } = default!;
-    public DbSet<LogProjProjectMember> LogProjProjectMembers { get; set; } = default!;
-    public DbSet<LogSecRoleClaim> LogSecRoleClaims { get; set; } = default!;
-    public DbSet<LogSecUser> LogSecUsers { get; set; } = default!;
-    public DbSet<LogSecUserAuth> LogSecUserAuths { get; set; } = default!;
-    public DbSet<LogSecUserRole> LogSecUserRoles { get; set; } = default!;
+    public DbSet<LogComExpenseQuery> LogComExpenseQueries { get; set; } 
+    public DbSet<LogErrorDbm> LogErrorDbms { get; set; } 
+    public DbSet<LogExpCategory> LogExpCategories { get; set; } 
+    public DbSet<LogExpExpense> LogExpExpenses { get; set; } 
+    public DbSet<LogExpReport> LogExpReports { get; set; } 
+    public DbSet<LogOrgOrganization> LogOrgOrganizations { get; set; } 
+    public DbSet<LogProjProject> LogProjProjects { get; set; } 
+    public DbSet<LogProjProjectMember> LogProjProjectMembers { get; set; } 
+    public DbSet<LogSecRoleClaim> LogSecRoleClaims { get; set; } 
+    public DbSet<LogSecUser> LogSecUsers { get; set; } 
+    public DbSet<LogSecUserAuth> LogSecUserAuths { get; set; } 
+    public DbSet<LogSecUserRole> LogSecUserRoles { get; set; } 
 
     // Misc
-    public DbSet<MstSpexecution> MstSpexecutions { get; set; } = default!;
+    public DbSet<MstSpexecution> MstSpexecutions { get; set; } 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
