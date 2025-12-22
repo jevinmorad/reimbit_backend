@@ -12,9 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 // EncryptedInt services
 builder.Services.AddAegisInt(options =>
 {
-    options.Salt = "my-super-secret-production-salt"; // Required
-    options.Alphabet = "aGbIJK3VWXYcfgmn14opL!MNO#Sqr2D-FEstuhBC9ijk67lvPQRw5dTUexy8zAHZ0"; // optional
-    options.MinLength = 6; // optional
+    var section = builder.Configuration.GetSection("AegisInt");
+    options.Salt = section.GetValue<string>("Salt") 
+        ?? throw new InvalidOperationException("AegisInt:Salt is missing in configuration.");
+    options.Alphabet = section.GetValue<string>("Alphabet");
+    options.MinLength = section.GetValue<int?>("MinLength") ?? 6;
 });
 
 // Add services to the container.
@@ -61,6 +63,11 @@ var app = builder.Build();
 
 // Expose OpenAPI JSON in all environments
 app.MapOpenApi();
+
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/openapi/v1.json", "Reimbit API");
+});
 
 app.UseHttpsRedirection();
 
