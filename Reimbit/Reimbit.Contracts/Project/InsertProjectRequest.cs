@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Project;
 
-public class InsertRequest
+public class InsertProjectRequest
 {
     public EncryptedInt? ProjectId { get; set; }
     public required string ProjectName { get; set; }

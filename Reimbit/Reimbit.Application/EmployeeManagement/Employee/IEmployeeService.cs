@@ -7,6 +7,6 @@ namespace Reimbit.Application.EmployeeManagement.Employee;
 
 public interface IEmployeeService
 {
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request);
-    Task<ErrorOr<PagedResult<ListResponse>>> List();
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request);
+    Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List();
 }

@@ -6,7 +6,7 @@ using Reimbit.Contracts.Expenses;
 using Reimbit.Core.Models;
 using Reimbit.Domain.Repositories;
 
-namespace Reimbit.Application.Expenses;
+namespace Reimbit.Application.Expenses.Expense;
 
 public class ExpenseService(
     ICurrentUserProvider currentUserProvider,
@@ -15,7 +15,7 @@ public class ExpenseService(
 {
     private readonly CurrentUser<TokenData> currentUser = currentUserProvider.GetCurrentUser<TokenData>();
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.UserId = currentUser.UserId;
@@ -28,12 +28,27 @@ public class ExpenseService(
         return await repository.Insert(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List()
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListMyExpenses()
     {
-        return await repository.List(currentUser.UserId);
+        return await repository.ListByUserId(currentUser.UserId);
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(EncryptedInt userId)
+    {
+        return await repository.ListByUserId(userId);
+    }
+
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId)
+    {
+        return await repository.ListByProject(projectId);
+    }
+
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization()
+    {
+        return await repository.ListByOrganization(currentUser.OrganizationId);
+    }
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.ModifiedByUserId = currentUser.UserId;
@@ -47,8 +62,13 @@ public class ExpenseService(
         return await repository.Delete(expenseId);
     }
 
-    public async Task<ErrorOr<GetResponse>> Get(EncryptedInt expenseId)
+    public async Task<ErrorOr<GetExpenseResponse>> Get(EncryptedInt expenseId)
     {
         return await repository.Get(expenseId);
+    }
+
+    public async Task<ErrorOr<ViewExpenseResponse>> View(EncryptedInt expenseId)
+    {
+        return await repository.View(expenseId);
     }
 }

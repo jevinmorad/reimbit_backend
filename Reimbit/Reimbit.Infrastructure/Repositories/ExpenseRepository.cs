@@ -11,7 +11,7 @@ namespace Reimbit.Infrastructure.Repositories;
 
 public class ExpenseRepository(IApplicationDbContext context) : IExpenseRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
         var dbContext = (DbContext)context;
@@ -78,13 +78,13 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List(int userId)
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(EncryptedInt userId)
     {
         var query = context.ExpExpenses
             .Include(x => x.Project)
             .Include(x => x.Category)
-            .Where(x => x.UserId == userId)
-            .Select(x => new ListResponse
+            .Where(x => x.UserId == (int)userId)
+            .Select(x => new ListExpensesResponse
             {
                 ExpenseId = x.ExpenseId,
                 ProjectId = x.ProjectId,
@@ -100,14 +100,72 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
 
         var data = await query.ToListAsync();
 
-        return new PagedResult<ListResponse>
+        return new PagedResult<ListExpensesResponse>
         {
             Data = data,
             Total = data.Count
         };
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId)
+    {
+        var query = context.ExpExpenses
+            .Include(x => x.Project)
+            .Include(x => x.Category)
+            .Where(x => x.ProjectId == (int)projectId)
+            .Select(x => new ListExpensesResponse
+            {
+                ExpenseId = x.ExpenseId,
+                ProjectId = x.ProjectId,
+                ProjectName = x.Project.ProjectName,
+                CategoryId = x.CategoryId,
+                CategoryName = x.Category.CategoryName,
+                Title = x.Title,
+                Amount = x.Amount,
+                Currency = x.Currency,
+                ExpenseStatus = x.ExpenseStatus,
+                Created = x.Created
+            });
+
+        var data = await query.ToListAsync();
+
+        return new PagedResult<ListExpensesResponse>
+        {
+            Data = data,
+            Total = data.Count
+        };
+    }
+
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization(int organizationId)
+    {
+        var query = context.ExpExpenses
+            .Include(x => x.Project)
+            .Include(x => x.Category)
+            .Where(x => x.OrganizationId == organizationId)
+            .Select(x => new ListExpensesResponse
+            {
+                ExpenseId = x.ExpenseId,
+                ProjectId = x.ProjectId,
+                ProjectName = x.Project.ProjectName,
+                CategoryId = x.CategoryId,
+                CategoryName = x.Category.CategoryName,
+                Title = x.Title,
+                Amount = x.Amount,
+                Currency = x.Currency,
+                ExpenseStatus = x.ExpenseStatus,
+                Created = x.Created
+            });
+
+        var data = await query.ToListAsync();
+
+        return new PagedResult<ListExpensesResponse>
+        {
+            Data = data,
+            Total = data.Count
+        };
+    }
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
         var dbContext = (DbContext)context;
@@ -238,14 +296,14 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
         }
     }
 
-    public async Task<ErrorOr<GetResponse>> Get(EncryptedInt expenseId)
+    public async Task<ErrorOr<GetExpenseResponse>> Get(EncryptedInt expenseId)
     {
         int id = expenseId;
         var expense = await context.ExpExpenses
             .Include(x => x.Project)
             .Include(x => x.Category)
             .Where(x => x.ExpenseId == id)
-            .Select(x => new GetResponse
+            .Select(x => new GetExpenseResponse
             {
                 ExpenseId = x.ExpenseId,
                 ProjectId = x.ProjectId,
@@ -260,6 +318,46 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
                 ExpenseStatus = x.ExpenseStatus,
                 RejectionReason = x.RejectionReason,
                 Created = x.Created
+            })
+            .FirstOrDefaultAsync();
+
+        if (expense == null)
+        {
+            return Error.NotFound("Expense.NotFound", "Expense not found");
+        }
+
+        return expense;
+    }
+
+    public async Task<ErrorOr<ViewExpenseResponse>> View(EncryptedInt expenseId)
+    {
+        int id = expenseId;
+        var expense = await context.ExpExpenses
+            .Include(x => x.Project)
+            .Include(x => x.Category)
+            .Include(x => x.User)
+            .Include(x => x.CreatedByUser)
+            .Include(x => x.ModifiedByUser)
+            .Where(x => x.ExpenseId == id)
+            .Select(x => new ViewExpenseResponse
+            {
+                ExpenseId = x.ExpenseId,
+                Title = x.Title ?? string.Empty,
+                Amount = x.Amount,
+                Currency = x.Currency,
+                Description = x.Description,
+                AttachmentUrl = x.AttachmentUrl,
+                ExpenseStatus = x.ExpenseStatus,
+                RejectionReason = x.RejectionReason,
+                ProjectId = x.ProjectId,
+                ProjectName = x.Project.ProjectName,
+                CategoryId = x.CategoryId,
+                CategoryName = x.Category.CategoryName,
+                UserDisplayName = $"{x.User.FirstName} {x.User.LastName}",
+                CreatedByUserDisplayName = $"{x.CreatedByUser.FirstName} {x.CreatedByUser.LastName}",
+                ModifiedByUserDisplayName = $"{x.ModifiedByUser.FirstName} {x.ModifiedByUser.LastName}",
+                Created = x.Created,
+                Modified = x.Modified
             })
             .FirstOrDefaultAsync();
 

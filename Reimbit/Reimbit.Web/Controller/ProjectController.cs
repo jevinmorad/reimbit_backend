@@ -14,13 +14,13 @@ namespace Reimbit.Web.Controller;
 public class ProjectController(
     IProjectService projectService,
     ICurrentUserProvider currentUserProvider,
-    IValidator<InsertRequest> insertRequestValidator
+    IValidator<InsertProjectRequest> insertRequestValidator
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create project")]
-    public async Task<IActionResult> Insert([FromBody] InsertRequest request)
+    public async Task<IActionResult> Insert([FromBody] InsertProjectRequest request)
     {
         await insertRequestValidator.ValidateAndThrowAsync(request);
         var result = await projectService.Insert(request);
@@ -29,7 +29,7 @@ public class ProjectController(
     }
 
     [HttpGet]
-    [Produces<PagedResult<ListResponse>>]
+    [Produces<PagedResult<ListProjectsResponse>>]
     [EndpointSummary("Project list")]
     public async Task<IActionResult> List()
     {
@@ -41,7 +41,7 @@ public class ProjectController(
     [HttpPut]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Update project")]
-    public async Task<IActionResult> Update([FromBody] UpdateRequest request)
+    public async Task<IActionResult> Update([FromBody] UpdateProjectRequest request)
     {
         var result = await projectService.Update(request);
 
@@ -49,7 +49,7 @@ public class ProjectController(
     }
 
     [HttpGet("{id}")]
-    [Produces<GetResponse>]
+    [Produces<GetProjectResponse>]
     [EndpointSummary("Get project")]
     public async Task<IActionResult> Get(EncryptedInt id)
     {
@@ -69,7 +69,7 @@ public class ProjectController(
     }
 
     [HttpGet("view/{id}")]
-    [Produces<ViewResponse>]
+    [Produces<ViewProjectResponse>]
     [EndpointSummary("View project details")]
     public async Task<IActionResult> View(EncryptedInt id)
     {

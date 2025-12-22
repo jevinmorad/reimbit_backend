@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Project;
 
-public class ListResponse
+public class ListProjectsResponse
 {
     public EncryptedInt ProjectId { get; set; }
     public required string ProjectName { get; set; }

@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Employee;
 
-public class ListResponse
+public class ListEmployeeResponse
 {
     public required EncryptedInt UserId { get; set; }
     public required string DisplayName { get; set; }

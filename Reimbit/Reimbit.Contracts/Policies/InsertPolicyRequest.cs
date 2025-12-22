@@ -2,7 +2,7 @@ using AegisInt.Core;
 
 namespace Reimbit.Contracts.Policies;
 
-public class InsertRequest
+public class InsertPolicyRequest
 {
     public required EncryptedInt ProjectId { get; set; }
     public EncryptedInt? CategoryId { get; set; }

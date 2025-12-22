@@ -1,6 +1,6 @@
 ﻿namespace Reimbit.Contracts.Project;
 
-public class ViewResponse
+public class ViewProjectResponse
 {
     public required string ProjectName { get; set; }
     public required string ManagerDisplayName { get; set; }

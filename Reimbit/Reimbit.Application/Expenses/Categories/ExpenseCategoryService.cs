@@ -2,7 +2,7 @@ using AegisInt.Core;
 using Common.Data.Models;
 using Common.Security;
 using ErrorOr;
-using Reimbit.Contracts.Expenses.Categories;
+using Reimbit.Contracts.ExpenseCategories;
 using Reimbit.Core.Models;
 using Reimbit.Domain.Repositories;
 
@@ -15,7 +15,7 @@ public class ExpenseCategoryService(
 {
     private readonly CurrentUser<TokenData> currentUser = currentUserProvider.GetCurrentUser<TokenData>();
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseCategoriesRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
@@ -26,12 +26,12 @@ public class ExpenseCategoryService(
         return await repository.Insert(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List()
+    public async Task<ErrorOr<PagedResult<ListExpenseCategoriesResponse>>> List()
     {
         return await repository.List(currentUser.UserId);
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseCategoriesRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.ModifiedByUserId = currentUser.UserId;
@@ -45,7 +45,7 @@ public class ExpenseCategoryService(
         return await repository.Delete(categoryId);
     }
 
-    public async Task<ErrorOr<GetResponse>> Get(EncryptedInt categoryId)
+    public async Task<ErrorOr<GetExpenseCategoriesResponse>> Get(EncryptedInt categoryId)
     {
         return await repository.Get(categoryId);
     }

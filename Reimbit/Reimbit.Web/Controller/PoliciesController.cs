@@ -14,14 +14,14 @@ namespace Reimbit.Web.Controller;
 public class PoliciesController(
     IPoliciesService service,
     ICurrentUserProvider currentUserProvider,
-    IValidator<InsertRequest> insertValidator,
-    IValidator<UpdateRequest> updateValidator
+    IValidator<InsertPolicyRequest> insertValidator,
+    IValidator<UpdatePolicyRequest> updateValidator
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create policy")]
-    public async Task<IActionResult> Insert([FromBody] InsertRequest request)
+    public async Task<IActionResult> Insert([FromBody] InsertPolicyRequest request)
     {
         await insertValidator.ValidateAndThrowAsync(request);
         var result = await service.Insert(request);
@@ -29,7 +29,7 @@ public class PoliciesController(
     }
 
     [HttpGet("list/{projectId}")]
-    [Produces<PagedResult<ListResponse>>]
+    [Produces<PagedResult<ListPoliciesResponse>>]
     [EndpointSummary("List policies by project")]
     public async Task<IActionResult> List(EncryptedInt projectId)
     {
@@ -40,7 +40,7 @@ public class PoliciesController(
     [HttpPut]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Update policy")]
-    public async Task<IActionResult> Update([FromBody] UpdateRequest request)
+    public async Task<IActionResult> Update([FromBody] UpdatePolicyRequest request)
     {
         await updateValidator.ValidateAndThrowAsync(request);
         var result = await service.Update(request);
@@ -57,7 +57,7 @@ public class PoliciesController(
     }
 
     [HttpGet("{id}")]
-    [Produces<GetResponse>]
+    [Produces<GetPolicyResponse>]
     [EndpointSummary("Get policy")]
     public async Task<IActionResult> Get(EncryptedInt id)
     {

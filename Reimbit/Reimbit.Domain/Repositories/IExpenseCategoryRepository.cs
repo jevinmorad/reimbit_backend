@@ -1,15 +1,15 @@
 using AegisInt.Core;
 using Common.Data.Models;
 using ErrorOr;
-using Reimbit.Contracts.Expenses.Categories;
+using Reimbit.Contracts.ExpenseCategories;
 
 namespace Reimbit.Domain.Repositories;
 
 public interface IExpenseCategoryRepository
 {
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request);
-    Task<ErrorOr<PagedResult<ListResponse>>> List(int userId);
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseCategoriesRequest request);
+    Task<ErrorOr<PagedResult<ListExpenseCategoriesResponse>>> List(int userId);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseCategoriesRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt categoryId);
-    Task<ErrorOr<GetResponse>> Get(EncryptedInt categoryId);
+    Task<ErrorOr<GetExpenseCategoriesResponse>> Get(EncryptedInt categoryId);
 }

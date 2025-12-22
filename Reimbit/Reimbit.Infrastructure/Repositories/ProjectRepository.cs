@@ -66,12 +66,12 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
         }
     }
 
-    public async Task<ErrorOr<GetResponse>> Get(EncryptedInt projectId)
+    public async Task<ErrorOr<GetProjectResponse>> Get(EncryptedInt projectId)
     {
         int id = projectId;
         var project = await context.ProjProjects
             .Where(x => x.ProjectId == id)
-            .Select(x => new GetResponse
+            .Select(x => new GetProjectResponse
             {
                 ProjectId = x.ProjectId,
                 ProjectName = x.ProjectName,
@@ -91,7 +91,7 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
         return project;
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertProjectRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
 
@@ -152,7 +152,7 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List(int organizationId)
+    public async Task<ErrorOr<PagedResult<ListProjectsResponse>>> List(int organizationId)
     {
         var projects = await context.ProjProjects
             .Where(x => x.OrganizationId == organizationId)
@@ -166,7 +166,7 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
             })
             .ToListAsync();
 
-        var data = projects.Select(x => new ListResponse
+        var data = projects.Select(x => new ListProjectsResponse
         {
             ProjectId = x.ProjectId,
             ProjectName = x.ProjectName,
@@ -189,14 +189,14 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
 
         //var data = await query.ToListAsync();
 
-        return new PagedResult<ListResponse>
+        return new PagedResult<ListProjectsResponse>
         {
             Data = data,
             Total = data.Count
         };
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateProjectRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
         var dbContext = (DbContext)context;
@@ -256,7 +256,7 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
         }
     }
 
-    public async Task<ErrorOr<ViewResponse>> View(EncryptedInt projectId)
+    public async Task<ErrorOr<ViewProjectResponse>> View(EncryptedInt projectId)
     {
         int id = projectId;
         
@@ -274,7 +274,7 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
             return Error.NotFound("Project.NotFound", "Project not found");
         }
 
-        var response = new ViewResponse
+        var response = new ViewProjectResponse
         {
             ProjectName = project.ProjectName,
             ManagerDisplayName = $"{project.Manager.FirstName} {project.Manager.LastName}",

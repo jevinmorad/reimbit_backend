@@ -7,6 +7,6 @@ namespace Reimbit.Domain.Repositories;
 
 public interface IEmployeeRepository
 {
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request);
-    Task<ErrorOr<PagedResult<ListResponse>>> List(int organizationId);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request);
+    Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List(int organizationId);
 }

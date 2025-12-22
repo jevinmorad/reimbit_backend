@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Policies;
 
-public class ListResponse
+public class ListPoliciesResponse
 {
     public EncryptedInt PolicyId { get; set; }
     public EncryptedInt ProjectId { get; set; }

@@ -14,13 +14,13 @@ namespace Reimbit.Web.Controller;
 public class EmployeeController(
     ICurrentUserProvider currentUserProvider,
     IEmployeeService employeeService,
-    IValidator<InsertRequest> insertRequestValidator
+    IValidator<InsertEmployeeRequest> insertRequestValidator
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Insert")]
-    public async Task<IActionResult> Insert([FromBody] InsertRequest request)
+    public async Task<IActionResult> Insert([FromBody] InsertEmployeeRequest request)
     {
         await insertRequestValidator.ValidateAndThrowAsync(request);
         var result = await employeeService.Insert(request);
@@ -29,7 +29,7 @@ public class EmployeeController(
     }
 
     [HttpGet]
-    [Produces<PagedResult<ListResponse>>]
+    [Produces<PagedResult<ListEmployeeResponse>>]
     [EndpointSummary("List all employees")]
     public async Task<IActionResult> List()
     {

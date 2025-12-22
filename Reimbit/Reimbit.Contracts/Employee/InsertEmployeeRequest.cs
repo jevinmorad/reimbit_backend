@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Employee;
 
-public class InsertRequest
+public class InsertEmployeeRequest
 {
     public EncryptedInt? UserId { get; set; }
     public required int OrganizationId { get; set; }

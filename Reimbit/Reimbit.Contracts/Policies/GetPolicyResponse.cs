@@ -2,14 +2,12 @@
 
 namespace Reimbit.Contracts.Policies;
 
-public class UpdateRequest
+public class GetPolicyResponse
 {
-    public required EncryptedInt PolicyId { get; set; }
-    public required EncryptedInt ProjectId { get; set; }
+    public EncryptedInt PolicyId { get; set; }
+    public EncryptedInt ProjectId { get; set; }
     public EncryptedInt? CategoryId { get; set; }
     public decimal? MaxAmount { get; set; }
     public bool IsReceiptMandatory { get; set; }
     public string? Description { get; set; }
-    public int ModifiedByUserId { get; set; }
-    public DateTime Modified { get; set; }
 }

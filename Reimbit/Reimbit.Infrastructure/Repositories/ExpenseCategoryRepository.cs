@@ -2,7 +2,7 @@ using AegisInt.Core;
 using Common.Data.Models;
 using ErrorOr;
 using Microsoft.EntityFrameworkCore;
-using Reimbit.Contracts.Expenses.Categories;
+using Reimbit.Contracts.ExpenseCategories;
 using Reimbit.Domain.Models;
 using Reimbit.Domain.Repositories;
 using Reimbit.Infrastructure.Data;
@@ -11,7 +11,7 @@ namespace Reimbit.Infrastructure.Repositories;
 
 public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseCategoryRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseCategoriesRequest request)
     {
         var entity = new ExpCategory
         {
@@ -34,11 +34,11 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
         };
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List(int userId)
+    public async Task<ErrorOr<PagedResult<ListExpenseCategoriesResponse>>> List(int userId)
     {
         var query = from c in context.ExpCategories
                     join p in context.ProjProjects on c.ProjectId equals p.ProjectId
-                    select new ListResponse
+                    select new ListExpenseCategoriesResponse
                     {
                         CategoryId = c.CategoryId,
                         ProjectId = c.ProjectId,
@@ -48,14 +48,14 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
 
         var list = await query.ToListAsync();
         
-        return new PagedResult<ListResponse>
+        return new PagedResult<ListExpenseCategoriesResponse>
         {
             Data = list,
             Total= list.Count
         };
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseCategoriesRequest request)
     {
         var entity = await context.ExpCategories.FindAsync((int)request.CategoryId);
         if (entity == null)
@@ -93,7 +93,7 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
             };
     }
 
-    public async Task<ErrorOr<GetResponse>> Get(EncryptedInt categoryId)
+    public async Task<ErrorOr<GetExpenseCategoriesResponse>> Get(EncryptedInt categoryId)
     {
         var entity = await context.ExpCategories.FindAsync((int)categoryId);
         if (entity == null)
@@ -101,7 +101,7 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
             return Error.NotFound("Category.NotFound", "Category not found");
         }
 
-        return new GetResponse
+        return new GetExpenseCategoriesResponse
         {
             CategoryId = entity.CategoryId,
             ProjectId = entity.ProjectId,

@@ -15,7 +15,7 @@ public class EmployeeService(
 {
     private readonly CurrentUser<TokenData> currentUser = currentUserProvider.GetCurrentUser<TokenData>();
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
@@ -27,7 +27,7 @@ public class EmployeeService(
         return result;
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List()
+    public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List()
     {
         int OrganizationId = currentUser.OrganizationId;
         var result = await repository.List(OrganizationId);

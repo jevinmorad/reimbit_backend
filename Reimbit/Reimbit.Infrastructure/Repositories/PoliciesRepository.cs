@@ -11,7 +11,7 @@ namespace Reimbit.Infrastructure.Repositories;
 
 public class PoliciesRepository(IApplicationDbContext context) : IPoliciesRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertPolicyRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
         var dbContext = (DbContext)context;
@@ -40,14 +40,14 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List(EncryptedInt projectId)
+    public async Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt projectId)
     {
         int id = projectId;
         var query = context.ProjExpensePolicies
             .Include(x => x.Project)
             .Include(x => x.Category)
             .Where(x => x.ProjectId == id)
-            .Select(x => new ListResponse
+            .Select(x => new ListPoliciesResponse
             {
                 PolicyId = x.PolicyId,
                 ProjectId = x.ProjectId,
@@ -62,14 +62,14 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
 
         var data = await query.ToListAsync();
 
-        return new PagedResult<ListResponse>
+        return new PagedResult<ListPoliciesResponse>
         {
             Data = data,
             Total = data.Count
         };
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdatePolicyRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
         
@@ -126,12 +126,12 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
         }
     }
 
-    public async Task<ErrorOr<GetResponse>> Get(EncryptedInt policyId)
+    public async Task<ErrorOr<GetPolicyResponse>> Get(EncryptedInt policyId)
     {
         int id = policyId;
         var policy = await context.ProjExpensePolicies
             .Where(x => x.PolicyId == id)
-            .Select(x => new GetResponse
+            .Select(x => new GetPolicyResponse
             {
                 PolicyId = x.PolicyId,
                 ProjectId = x.ProjectId,

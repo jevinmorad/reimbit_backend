@@ -21,13 +21,13 @@ public class ProjectService(
         return result;
     }
 
-    public async Task<ErrorOr<GetResponse>> Get(EncryptedInt projectId)
+    public async Task<ErrorOr<GetProjectResponse>> Get(EncryptedInt projectId)
     {
         var result = await repository.Get(projectId);
         return result;
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertProjectRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
@@ -40,7 +40,7 @@ public class ProjectService(
         return result;
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List()
+    public async Task<ErrorOr<PagedResult<ListProjectsResponse>>> List()
     {
         var OrganizationId = currentUser.OrganizationId;
 
@@ -48,7 +48,7 @@ public class ProjectService(
         return result;
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateProjectRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.ModifiedByUserId = currentUser.UserId;
@@ -58,7 +58,7 @@ public class ProjectService(
         return result;
     }
 
-    public async Task<ErrorOr<ViewResponse>> View(EncryptedInt projectId)
+    public async Task<ErrorOr<ViewProjectResponse>> View(EncryptedInt projectId)
     {
         var result = await repository.View(projectId);
         return result;

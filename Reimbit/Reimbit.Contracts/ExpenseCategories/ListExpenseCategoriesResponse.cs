@@ -1,8 +1,8 @@
 using AegisInt.Core;
 
-namespace Reimbit.Contracts.Expenses.Categories;
+namespace Reimbit.Contracts.ExpenseCategories;
 
-public class GetResponse
+public class ListExpenseCategoriesResponse
 {
     public EncryptedInt CategoryId { get; set; }
     public EncryptedInt ProjectId { get; set; }

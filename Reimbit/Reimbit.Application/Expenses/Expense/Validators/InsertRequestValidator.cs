@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
 using Reimbit.Contracts.Expenses;
 
-namespace Reimbit.Application.Expenses.Validators;
+namespace Reimbit.Application.Expenses.Expense.Validators;
 
-public class InsertRequestValidator : AbstractValidator<InsertRequest>
+public class InsertRequestValidator : AbstractValidator<InsertExpenseRequest>
 {
     public InsertRequestValidator()
     {

@@ -3,7 +3,7 @@ using Reimbit.Contracts.Policies;
 
 namespace Reimbit.Application.Projects.Policies.Validators;
 
-public class UpdateRequestValidator : AbstractValidator<UpdateRequest>
+public class UpdateRequestValidator : AbstractValidator<UpdatePolicyRequest>
 {
     public UpdateRequestValidator()
     {

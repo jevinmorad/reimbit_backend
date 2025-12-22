@@ -7,10 +7,10 @@ namespace Reimbit.Application.Projects.Project;
 
 public interface IProjectService
 {
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request);
-    Task<ErrorOr<PagedResult<ListResponse>>> List();
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request);
-    Task<ErrorOr<GetResponse>> Get(EncryptedInt projectId);
-    Task<ErrorOr<ViewResponse>> View(EncryptedInt projectId);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertProjectRequest request);
+    Task<ErrorOr<PagedResult<ListProjectsResponse>>> List();
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateProjectRequest request);
+    Task<ErrorOr<GetProjectResponse>> Get(EncryptedInt projectId);
+    Task<ErrorOr<ViewProjectResponse>> View(EncryptedInt projectId);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt projectId);
 }

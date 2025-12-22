@@ -13,7 +13,7 @@ public class EmployeeRepository(
     IApplicationDbContext context    
 ) : IEmployeeRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
 
@@ -100,7 +100,7 @@ public class EmployeeRepository(
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListResponse>>> List(int organizationId)
+    public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List(int organizationId)
     {
         //var query =
         //    from u in context.SecUsers
@@ -126,7 +126,7 @@ public class EmployeeRepository(
             join r in context.SecRoles on ur.UserRoleId equals r.RoleId into rGroup
             from r in rGroup.DefaultIfEmpty()
             where ua.OrganizationId == organizationId
-            select new ListResponse
+            select new ListEmployeeResponse
             {
                 UserId = u.UserId,
                 DisplayName = u.FirstName + " " + u.LastName,
@@ -138,7 +138,7 @@ public class EmployeeRepository(
 
         var data = await query.ToListAsync();
         
-        return new PagedResult<ListResponse>
+        return new PagedResult<ListEmployeeResponse>
         {
             Total = data.Count,
             Data = data
