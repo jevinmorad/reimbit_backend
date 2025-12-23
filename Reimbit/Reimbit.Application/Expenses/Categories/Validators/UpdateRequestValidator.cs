@@ -7,8 +7,8 @@ public class UpdateRequestValidator : AbstractValidator<UpdateExpenseCategoriesR
 {
     public UpdateRequestValidator()
     {
-        RuleFor(x => x.CategoryId).NotEmpty();
-        RuleFor(x => x.ProjectId).NotEmpty();
-        RuleFor(x => x.CategoryName).NotEmpty();
+        RuleFor(x => x.CategoryId).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(x => x.ProjectId).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(x => x.CategoryName).NotEmpty().WithMessage("{PropertyName} is required");
     }
 }

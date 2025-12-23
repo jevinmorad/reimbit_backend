@@ -7,10 +7,10 @@ public class InsertRequestValidator : AbstractValidator<InsertEmployeeRequest>
 {
     public InsertRequestValidator()
     {
-        RuleFor(c => c.FirstName).NotEmpty();
-        RuleFor(c => c.LastName).NotEmpty();
-        RuleFor(c => c.Email).NotEmpty();
-        RuleFor(c => c.MobileNo).NotEmpty();
-        //RuleFor(c => c.RoleId).NotEmpty();
+        RuleFor(c => c.FirstName).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(c => c.LastName).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(c => c.Email).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(c => c.MobileNo).NotEmpty().WithMessage("{PropertyName} is required");
+        //RuleFor(c => c.RoleId).NotEmpty().WithMessage("{PropertyName} is required");
     }
 }

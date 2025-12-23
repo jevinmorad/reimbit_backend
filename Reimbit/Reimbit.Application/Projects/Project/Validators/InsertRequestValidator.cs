@@ -7,7 +7,7 @@ public class InsertRequestValidator : AbstractValidator<InsertProjectRequest>
 {
     public InsertRequestValidator()
     {
-        RuleFor(c => c.ProjectName).NotEmpty();
-        RuleFor(c => c.ManagerId).NotEmpty();
+        RuleFor(c => c.ProjectName).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(c => c.ManagerId).NotEmpty().WithMessage("{PropertyName} is required");
     }
 }

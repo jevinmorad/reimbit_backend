@@ -7,8 +7,8 @@ public class UpdateRequestValidator : AbstractValidator<UpdatePolicyRequest>
 {
     public UpdateRequestValidator()
     {
-        RuleFor(x => x.PolicyId).NotEmpty();
-        RuleFor(x => x.ProjectId).NotEmpty();
-        RuleFor(x => x.MaxAmount).GreaterThan(0).When(x => x.MaxAmount.HasValue);
+        RuleFor(x => x.PolicyId).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(x => x.ProjectId).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(x => x.MaxAmount).GreaterThan(0).WithMessage("{PropertyName} must be greater than 0").When(x => x.MaxAmount.HasValue);
     }
 }
