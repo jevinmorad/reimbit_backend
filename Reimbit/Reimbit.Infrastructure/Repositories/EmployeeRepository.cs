@@ -102,39 +102,22 @@ public class EmployeeRepository(
 
     public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List(int organizationId)
     {
-        //var query =
-        //    from u in context.SecUsers
-        //    join ua in context.SecUserAuths on u.UserId equals ua.UserId
-        //    join ur in context.SecUserRoles on u.UserId equals ur.UserId
-        //    join r in context.SecRoles on ur.UserRoleId equals r.RoleId
-        //    where ua.OrganizationId == OrganizationId
-        //    select new ListResponse
-        //    {
-        //        UserId = u.UserId,
-        //        DisplayName = u.FirstName + " " + u.LastName,
-        //        Email = u.Email,
-        //        MobileNo = u.MobileNo ?? "",
-        //        Role = r.RoleName,
-        //        IsActive = u.IsActive
-        //    };
-
-        var query =
-            from u in context.SecUsers
-            join ua in context.SecUserAuths on u.UserId equals ua.UserId
-            join ur in context.SecUserRoles on u.UserId equals ur.UserId into urGroup
-            from ur in urGroup.DefaultIfEmpty()
-            join r in context.SecRoles on ur.UserRoleId equals r.RoleId into rGroup
-            from r in rGroup.DefaultIfEmpty()
-            where ua.OrganizationId == organizationId
-            select new ListEmployeeResponse
+        var query = context.SecUsers
+            .Where(u => u.SecUserAuth!.OrganizationId == organizationId)
+            .Select(u => new ListEmployeeResponse
             {
                 UserId = u.UserId,
                 DisplayName = u.FirstName + " " + u.LastName,
                 Email = u.Email,
                 MobileNo = u.MobileNo ?? "",
-                Role = r != null ? r.RoleName : string.Empty,
+                Role = u.SecUserRoleUsers
+                    .Join(context.SecRoles,
+                        ur => ur.UserRoleId,
+                        r => r.RoleId,
+                        (ur, r) => r.RoleName)
+                    .FirstOrDefault() ?? string.Empty,
                 IsActive = u.IsActive
-            };
+            });
 
         var data = await query.ToListAsync();
         

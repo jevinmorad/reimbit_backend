@@ -13,10 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAegisInt(options =>
 {
     var section = builder.Configuration.GetSection("AegisInt");
-    options.Salt = section.GetValue<string>("Salt") 
-        ?? throw new InvalidOperationException("AegisInt:Salt is missing in configuration.");
+    options.Salt = section.GetValue<string>("Salt");
     options.Alphabet = section.GetValue<string>("Alphabet");
-    options.MinLength = section.GetValue<int?>("MinLength") ?? 6;
+    options.MinLength = section.GetValue<int>("MinLength");
 });
 
 // Add services to the container.
@@ -40,7 +39,6 @@ builder.Services
             ValidateAudience = false,
             ValidIssuer = jwt.Issuer,
             ValidAudience = jwt.Audience,
-            ClockSkew = TimeSpan.Zero
         };
     });
 
@@ -63,11 +61,6 @@ var app = builder.Build();
 
 // Expose OpenAPI JSON in all environments
 app.MapOpenApi();
-
-app.UseSwaggerUI(options =>
-{
-    options.SwaggerEndpoint("/openapi/v1.json", "Reimbit API");
-});
 
 app.UseHttpsRedirection();
 

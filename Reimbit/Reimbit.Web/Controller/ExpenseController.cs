@@ -14,9 +14,7 @@ namespace Reimbit.Web.Controller;
 [Route("api/[controller]")]
 public class ExpenseController(
     IExpenseService service,
-    ICurrentUserProvider currentUserProvider,
-    IValidator<InsertExpenseRequest> insertRequestValidator,
-    IValidator<UpdateExpenseRequest> updateRequestValidator
+    ICurrentUserProvider currentUserProvider
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
@@ -24,7 +22,6 @@ public class ExpenseController(
     [EndpointSummary("Create expense")]
     public async Task<IActionResult> Insert([FromBody] InsertExpenseRequest request)
     {
-        await insertRequestValidator.ValidateAndThrowAsync(request);
         var result = await service.Insert(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
@@ -70,7 +67,6 @@ public class ExpenseController(
     [EndpointSummary("Update expense")]
     public async Task<IActionResult> Update([FromBody] UpdateExpenseRequest request)
     {
-        await updateRequestValidator.ValidateAndThrowAsync(request);
         var result = await service.Update(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }

@@ -11,9 +11,7 @@ namespace Reimbit.Web.Controller;
 [Route("api/Security/[controller]")]
 public class AccountController(
     ICurrentUserProvider currentUserProvider,
-    IAccountService accountService,
-    IValidator<LoginRequest> loginRequestValidator,
-    IValidator<RegisterRequest> registerRequestValidator
+    IAccountService accountService
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
@@ -22,7 +20,6 @@ public class AccountController(
     [EndpointSummary("Login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        await loginRequestValidator.ValidateAndThrowAsync(request);
         var result = await accountService.Login(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
@@ -33,7 +30,6 @@ public class AccountController(
     [EndpointSummary("Register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        await registerRequestValidator.ValidateAndThrowAsync(request);
         var result = await accountService.Register(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }

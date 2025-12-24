@@ -19,8 +19,6 @@ public static class ApplicationConfiguration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddAutoMapper(typeof(ApplicationConfiguration).Assembly);
-
         // Automatically register all validators in this assembly
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         services.AddFluentValidationAutoValidation();

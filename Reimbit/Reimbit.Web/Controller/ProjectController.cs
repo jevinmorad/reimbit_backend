@@ -13,8 +13,7 @@ namespace Reimbit.Web.Controller;
 [Route("/api/[controller]")]
 public class ProjectController(
     IProjectService projectService,
-    ICurrentUserProvider currentUserProvider,
-    IValidator<InsertProjectRequest> insertRequestValidator
+    ICurrentUserProvider currentUserProvider
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
@@ -22,7 +21,6 @@ public class ProjectController(
     [EndpointSummary("Create project")]
     public async Task<IActionResult> Insert([FromBody] InsertProjectRequest request)
     {
-        await insertRequestValidator.ValidateAndThrowAsync(request);
         var result = await projectService.Insert(request);
 
         return result.Match(_ => Ok(result.Value), Problem);

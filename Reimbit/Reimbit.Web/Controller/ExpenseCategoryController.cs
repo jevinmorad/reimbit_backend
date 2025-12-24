@@ -13,9 +13,7 @@ namespace Reimbit.Web.Controller;
 [Route("api/[controller]")]
 public class ExpenseCategoryController(
     IExpenseCategoryService service,
-    ICurrentUserProvider currentUserProvider,
-    IValidator<InsertExpenseCategoriesRequest> insertRequestValidator,
-    IValidator<UpdateExpenseCategoriesRequest> updateRequestValidator
+    ICurrentUserProvider currentUserProvider
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
@@ -23,7 +21,6 @@ public class ExpenseCategoryController(
     [EndpointSummary("Create expense category")]
     public async Task<IActionResult> Insert([FromBody] InsertExpenseCategoriesRequest request)
     {
-        await insertRequestValidator.ValidateAndThrowAsync(request);
         var result = await service.Insert(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
@@ -42,7 +39,6 @@ public class ExpenseCategoryController(
     [EndpointSummary("Update expense category")]
     public async Task<IActionResult> Update([FromBody] UpdateExpenseCategoriesRequest request)
     {
-        await updateRequestValidator.ValidateAndThrowAsync(request);
         var result = await service.Update(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }

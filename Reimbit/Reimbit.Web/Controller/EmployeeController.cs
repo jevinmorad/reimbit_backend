@@ -13,8 +13,7 @@ namespace Reimbit.Web.Controller;
 [Route("api/[controller]")]
 public class EmployeeController(
     ICurrentUserProvider currentUserProvider,
-    IEmployeeService employeeService,
-    IValidator<InsertEmployeeRequest> insertRequestValidator
+    IEmployeeService employeeService
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
@@ -22,7 +21,6 @@ public class EmployeeController(
     [EndpointSummary("Insert")]
     public async Task<IActionResult> Insert([FromBody] InsertEmployeeRequest request)
     {
-        await insertRequestValidator.ValidateAndThrowAsync(request);
         var result = await employeeService.Insert(request);
 
         return result.Match(_ => Ok(result.Value), Problem);

@@ -175,20 +175,6 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
             IsActive = x.IsActive
         }).ToList();
 
-        //var query =
-        //    from p in context.ProjProjects
-        //    where p.OrganizationId == OrganizationId
-        //    select new ListResponse
-        //    {
-        //        ProjectId = p.ProjectId,
-        //        ProjectName = p.ProjectName,
-        //        ProjectLogoUrl = p.ProjectLogoUrl,
-        //        ProjectDetails = p.ProjectDetails,
-        //        IsActive = p.IsActive
-        //    };
-
-        //var data = await query.ToListAsync();
-
         return new PagedResult<ListProjectsResponse>
         {
             Data = data,

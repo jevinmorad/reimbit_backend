@@ -13,9 +13,7 @@ namespace Reimbit.Web.Controller;
 [Route("/api/[controller]")]
 public class PoliciesController(
     IPoliciesService service,
-    ICurrentUserProvider currentUserProvider,
-    IValidator<InsertPolicyRequest> insertValidator,
-    IValidator<UpdatePolicyRequest> updateValidator
+    ICurrentUserProvider currentUserProvider
 ) : ApiController(currentUserProvider)
 {
     [HttpPost]
@@ -23,7 +21,6 @@ public class PoliciesController(
     [EndpointSummary("Create policy")]
     public async Task<IActionResult> Insert([FromBody] InsertPolicyRequest request)
     {
-        await insertValidator.ValidateAndThrowAsync(request);
         var result = await service.Insert(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
@@ -42,7 +39,6 @@ public class PoliciesController(
     [EndpointSummary("Update policy")]
     public async Task<IActionResult> Update([FromBody] UpdatePolicyRequest request)
     {
-        await updateValidator.ValidateAndThrowAsync(request);
         var result = await service.Update(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }

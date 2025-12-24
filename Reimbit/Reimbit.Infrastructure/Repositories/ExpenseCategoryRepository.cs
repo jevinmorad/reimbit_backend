@@ -26,25 +26,26 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
         };
 
         context.ExpCategories.Add(entity);
-        await context.SaveChangesAsync();
+        var rowAffected = await context.SaveChangesAsync();
 
         return new OperationResponse<EncryptedInt>
         {
             Id = entity.CategoryId,
+            RowsAffected = rowAffected
         };
     }
 
     public async Task<ErrorOr<PagedResult<ListExpenseCategoriesResponse>>> List(int userId)
     {
-        var query = from c in context.ExpCategories
-                    join p in context.ProjProjects on c.ProjectId equals p.ProjectId
-                    select new ListExpenseCategoriesResponse
-                    {
-                        CategoryId = c.CategoryId,
-                        ProjectId = c.ProjectId,
-                        CategoryName = c.CategoryName,
-                        Description = c.Description
-                    };
+        var query = context.ExpCategories
+            .Include(x => x.Project)
+            .Select(x => new ListExpenseCategoriesResponse
+            {
+                CategoryId = x.CategoryId,
+                ProjectId = x.ProjectId,
+                CategoryName = x.CategoryName,
+                Description = x.Description                
+            });
 
         var list = await query.ToListAsync();
         
@@ -90,7 +91,7 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
         return new OperationResponse<EncryptedInt>
         {
             Id = entity.CategoryId,
-            };
+        };
     }
 
     public async Task<ErrorOr<GetExpenseCategoriesResponse>> Get(EncryptedInt categoryId)
