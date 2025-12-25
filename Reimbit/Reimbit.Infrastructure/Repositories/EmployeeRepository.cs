@@ -15,8 +15,6 @@ public class EmployeeRepository(
 {
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request)
     {
-        var response = new OperationResponse<EncryptedInt>();
-
         var dbContext = (DbContext)context;
 
         await using var tx = await dbContext.Database.BeginTransactionAsync();
@@ -30,14 +28,14 @@ public class EmployeeRepository(
                 Email = request.Email,
                 MobileNo = request.MobileNo,
                 UserName = request.Email,
-                IsActive = true,
+                IsActive = request.IsActive,
                 Created = request.Created,
+                Modified = request.Modified,
                 CreatedByUserId = request.CreatedByUserId,
                 ModifiedByUserId = request.ModifiedByUserId
             };
 
-            await context.SecUsers.AddAsync(user);
-            //await context.SaveChangesAsync(default);
+            var us = context.SecUsers.Add(user);
 
             var userRole = new SecUserRole
             {
@@ -47,8 +45,7 @@ public class EmployeeRepository(
                 Modified = request.Modified
             };
 
-            await context.SecUserRoles.AddAsync(userRole);
-            //await context.SaveChangesAsync(default);
+            context.SecUserRoles.Add(userRole);
 
             var logUser = new LogSecUser
             {
@@ -68,7 +65,7 @@ public class EmployeeRepository(
                 Modified = user.Modified
             };
 
-            await context.LogSecUsers.AddAsync(logUser);
+            context.LogSecUsers.Add(logUser);
 
             var logUserRole = new LogSecUserRole
             {
@@ -83,14 +80,16 @@ public class EmployeeRepository(
                 ModifiedByUserId = userRole.ModifiedByUserId
             };
 
-            await context.LogSecUserRoles.AddAsync(logUserRole);
+            context.LogSecUserRoles.Add(logUserRole);
 
-            await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync(default);
             await tx.CommitAsync();
 
-            response.Id = user.UserId;
-
-            return response;
+            return new OperationResponse<EncryptedInt>()
+            {
+                Id = user.UserId,
+                RowsAffected = rowsAffected
+            };
         }
         catch (Exception ex)
         {

@@ -5,6 +5,7 @@ namespace Reimbit.Contracts.Employee;
 
 public class InsertEmployeeRequest
 {
+    [JsonIgnore]
     public EncryptedInt? UserId { get; set; }
     public required string FirstName { get; set; }
     public required string LastName { get; set; }

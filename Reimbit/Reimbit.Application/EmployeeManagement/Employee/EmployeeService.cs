@@ -19,6 +19,7 @@ public class EmployeeService(
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
+        request.ModifiedByUserId = currentUser.UserId;
         request.Created = DateTime.Now;
         request.Modified = DateTime.Now;
         request.IsActive = true;
