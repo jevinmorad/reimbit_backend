@@ -23,30 +23,21 @@ public class ExpenseService(
         request.ModifiedByUserId = currentUser.UserId;
         request.Created = DateTime.UtcNow;
         request.Modified = DateTime.UtcNow;
-        request.ExpenseStatus = "submitted";
 
         return await repository.Insert(request);
     }
 
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListMyExpenses()
-    {
-        return await repository.ListByUserId(currentUser.UserId);
-    }
+        => await repository.ListByUserId(currentUser.UserId);
 
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(EncryptedInt userId)
-    {
-        return await repository.ListByUserId(userId);
-    }
+        => await repository.ListByUserId(userId);
 
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId)
-    {
-        return await repository.ListByProject(projectId);
-    }
+        => await repository.ListByProject(projectId);
 
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization()
-    {
-        return await repository.ListByOrganization(currentUser.OrganizationId);
-    }
+        => await repository.ListByOrganization(currentUser.OrganizationId);
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseRequest request)
     {
@@ -58,28 +49,11 @@ public class ExpenseService(
     }
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt expenseId)
-    {
-        return await repository.Delete(expenseId);
-    }
+        => await repository.Delete(expenseId);
 
     public async Task<ErrorOr<GetExpenseResponse>> Get(EncryptedInt expenseId)
-    {
-        return await repository.Get(expenseId);
-    }
+        => await repository.Get(expenseId);
 
     public async Task<ErrorOr<ViewExpenseResponse>> View(EncryptedInt expenseId)
-    {
-        return await repository.View(expenseId);
-    }
-
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(EncryptedInt ExpenseId)
-    {
-        return await repository.Accept(ExpenseId, currentUser.UserId);
-    }
-
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Reject(RejectExpenseRequest request)
-    {
-        request.ModifiedByUserId = currentUser.UserId;
-        return await repository.Reject(request);
-    }
+        => await repository.View(expenseId);
 }

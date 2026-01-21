@@ -1,44 +1,55 @@
 ﻿using AegisInt.Core;
 using Common.Data.Models;
+using Common.Security;
 using ErrorOr;
-using Reimbit.Contracts.Security.Role;
+using Reimbit.Domain.Repositories;
+using Reimbit.Core.Models;
+using Reimbit.Contracts.Role;
 
 namespace Reimbit.Application.EmployeeManagement.Role;
 
-public class RoleService : IRoleService
+public class RoleService(
+    ICurrentUserProvider currentUserProvider,
+    IRoleRepository repository
+) : IRoleService
 {
-    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt RoleID)
+    private readonly CurrentUser<TokenData> currentUser = currentUserProvider.GetCurrentUser<TokenData>();
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt RoleID)
+        => await repository.Delete(RoleID);
+
+    public async Task<ErrorOr<GetRoleResponse>> Get(EncryptedInt RoleID)
+        => await repository.Get(RoleID);
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRoleRequest request)
     {
-        throw new NotImplementedException();
+        request.OrganizationID = currentUser.OrganizationId;
+        request.CreatedByUserID = currentUser.UserId;
+        request.Created = DateTime.UtcNow;
+
+        return await repository.Insert(request);
     }
 
-    public Task<ErrorOr<GetResponse>> Get(EncryptedInt RoleID)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<ErrorOr<PagedResult<ListResponse>>> List(ListRequest request)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<ErrorOr<PagedResult<ListRoleResponse>>> List()
+        => await repository.List(currentUser.OrganizationId);
 
     public Task<ErrorOr<IReadOnlyList<OptionsResponse<EncryptedInt>>>> Options()
+        => throw new NotImplementedException();
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRoleRequest request)
     {
-        throw new NotImplementedException();
+        request.ModifiedByUserID = currentUser.UserId;
+        request.Modified = DateTime.UtcNow;
+        return await repository.Update(request);
     }
 
-    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRequest request)
-    {
-        throw new NotImplementedException();
-    }
+    public async Task<ErrorOr<ViewRoleResponse>> View(EncryptedInt RoleID)
+        => await repository.View(RoleID);
 
-    public Task<ErrorOr<ViewResponse>> View(EncryptedInt RoleID)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> AssignRoleToUser(UserRoleAssignmentRequest request)
     {
-        throw new NotImplementedException();
+        request.CreatedByUserId = currentUser.UserId;
+        request.Created = DateTime.UtcNow;
+        return await repository.AssignRoleToUser(request);
     }
 }

@@ -31,9 +31,7 @@ public class ProjectService(
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
-        request.ModifiedByUserId = currentUser.UserId;
         request.Created = DateTime.UtcNow;
-        request.Modified = DateTime.UtcNow;
         request.IsActive = true;
 
         var result = await repository.Insert(request);

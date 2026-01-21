@@ -7,7 +7,7 @@ public class InsertRequestValidator : AbstractValidator<InsertPolicyRequest>
 {
     public InsertRequestValidator()
     {
-        RuleFor(x => x.ProjectId).NotEmpty().WithMessage("{PropertyName} is required");
+        RuleFor(x => x.CategoryId).NotEmpty().WithMessage("{PropertyName} is required");
         RuleFor(x => x.MaxAmount).GreaterThan(0).WithMessage("{PropertyName} must be greater than 0").When(x => x.MaxAmount.HasValue);
     }
 }

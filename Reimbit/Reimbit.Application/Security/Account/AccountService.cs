@@ -1,5 +1,7 @@
-﻿using ErrorOr;
-using Reimbit.Contracts.Security.Account;
+﻿using AegisInt.Core;
+using Common.Data.Models;
+using ErrorOr;
+using Reimbit.Contracts.Account;
 using Reimbit.Domain.Repositories;
 
 namespace Reimbit.Application.Security.Account;
@@ -8,16 +10,16 @@ public class AccountService(
     IAccountRepository repository
 ) : IAccountService
 {
-
-    public async Task<ErrorOr<LoginResponse<LoginInfo>>> Login(LoginRequest request)
+    public Task<ErrorOr<LoginResponse<LoginInfo>>> Login(LoginRequest request) => repository.Login(request);
+    public Task<ErrorOr<LoginResponse<LoginInfo>>> Register(RegisterRequest request) => repository.Register(request);
+    public Task<ErrorOr<LoginResponse<LoginInfo>>> Refresh(RefreshTokenRequest request)
     {
-        var result = await repository.Login(request);
-        return result;
+        request.CurrentDate = DateTime.UtcNow;
+        return repository.Refresh(request);
     }
-
-    public async Task<ErrorOr<LoginResponse<LoginInfo>>> Register(RegisterRequest request)
+    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Logout(LogoutRequest request)
     {
-        var result = await repository.Register(request);
-        return result;
+        request.CurrentDate = DateTime.UtcNow;
+        return repository.Logout(request);
     }
 }

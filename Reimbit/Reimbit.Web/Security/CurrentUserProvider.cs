@@ -36,10 +36,10 @@ public class CurrentUserProvider(IHttpContextAccessor httpContextAccessor) : ICu
     {
         var user = httpContextAccessor.HttpContext?.User;
 
-        //if (user == null || user.Identity is not { IsAuthenticated: true })
-        //{
-        //    return new CurrentUser<TokenData>(default, default, default!);
-        //}
+        if (user == null || user.Identity is not { IsAuthenticated: true })
+        {
+            return new CurrentUser<TokenData>(default, default, default!);
+        }
 
         var tokenData = new TokenData
         {

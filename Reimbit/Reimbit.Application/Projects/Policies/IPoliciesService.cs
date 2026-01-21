@@ -8,7 +8,7 @@ namespace Reimbit.Application.Projects.Policies;
 public interface IPoliciesService
 {
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertPolicyRequest request);
-    Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt projectId);
+    Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt categoryId);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdatePolicyRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt policyId);
     Task<ErrorOr<GetPolicyResponse>> Get(EncryptedInt policyId);

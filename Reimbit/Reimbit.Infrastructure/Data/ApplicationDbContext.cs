@@ -17,76 +17,118 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         configurationBuilder.UseAegisIntEncryption();
     }
 
-    // Security
-    public DbSet<SecUser> SecUsers { get; set; } 
-    public DbSet<SecUserAuth> SecUserAuths { get; set; } 
-    public DbSet<SecUserRole> SecUserRoles { get; set; } 
-    public DbSet<SecRole> SecRoles { get; set; } 
-    public DbSet<SecRoleClaim> SecRoleClaims { get; set; } 
-    public DbSet<SecOperation> SecOperations { get; set; } 
+    public virtual DbSet<AprApprovalInstance> AprApprovalInstances { get; set; }
 
-    // Organization / Projects
-    public DbSet<OrgOrganization> OrgOrganizations { get; set; } 
-    public DbSet<ProjProject> ProjProjects { get; set; } 
-    public DbSet<ProjProjectMember> ProjProjectMembers { get; set; } 
-    public DbSet<ProjExpensePolicy> ProjExpensePolicies { get; set; } 
+    public virtual DbSet<AprApprovalLevel> AprApprovalLevels { get; set; }
 
-    // Expenses
-    public DbSet<ExpCategory> ExpCategories { get; set; } 
-    public DbSet<ExpExpense> ExpExpenses { get; set; } 
-    public DbSet<ExpReport> ExpReports { get; set; } 
-    public DbSet<ComExpenseQuery> ComExpenseQueries { get; set; } 
+    public virtual DbSet<AprApprovalRule> AprApprovalRules { get; set; }
 
-    // Logs
-    public DbSet<LogComExpenseQuery> LogComExpenseQueries { get; set; } 
-    public DbSet<LogErrorDbm> LogErrorDbms { get; set; } 
-    public DbSet<LogExpCategory> LogExpCategories { get; set; } 
-    public DbSet<LogExpExpense> LogExpExpenses { get; set; } 
-    public DbSet<LogExpReport> LogExpReports { get; set; } 
-    public DbSet<LogOrgOrganization> LogOrgOrganizations { get; set; } 
-    public DbSet<LogProjProject> LogProjProjects { get; set; } 
-    public DbSet<LogProjProjectMember> LogProjProjectMembers { get; set; } 
-    public DbSet<LogSecRoleClaim> LogSecRoleClaims { get; set; } 
-    public DbSet<LogSecUser> LogSecUsers { get; set; } 
-    public DbSet<LogSecUserAuth> LogSecUserAuths { get; set; } 
-    public DbSet<LogSecUserRole> LogSecUserRoles { get; set; } 
+    public virtual DbSet<ExpCategory> ExpCategories { get; set; }
 
-    // Misc
-    public DbSet<MstSpexecution> MstSpexecutions { get; set; } 
+    public virtual DbSet<ExpExpense> ExpExpenses { get; set; }
+
+    public virtual DbSet<ExpExpenseRejection> ExpExpenseRejections { get; set; }
+
+    public virtual DbSet<ExpExpenseReport> ExpExpenseReports { get; set; }
+
+    public virtual DbSet<ExpPolicy> ExpPolicies { get; set; }
+
+    public virtual DbSet<ExpReportExpense> ExpReportExpenses { get; set; }
+
+    public virtual DbSet<ExpReportRejection> ExpReportRejections { get; set; }
+
+    public virtual DbSet<OrgOrganization> OrgOrganizations { get; set; }
+
+    public virtual DbSet<PayPayout> PayPayouts { get; set; }
+
+    public virtual DbSet<ProjProject> ProjProjects { get; set; }
+
+    public virtual DbSet<SecDelegateApprover> SecDelegateApprovers { get; set; }
+
+    public virtual DbSet<SecRole> SecRoles { get; set; }
+
+    public virtual DbSet<SecRoleClaim> SecRoleClaims { get; set; }
+
+    public virtual DbSet<SecUser> SecUsers { get; set; }
+
+    public virtual DbSet<SecUserAuth> SecUserAuths { get; set; }
+
+    public virtual DbSet<SecUserManager> SecUserManagers { get; set; }
+
+    public virtual DbSet<SecUserRole> SecUserRoles { get; set; }
+
+    public virtual DbSet<SysAuditLog> SysAuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<ComExpenseQuery>(entity =>
+        modelBuilder.Entity<AprApprovalInstance>(entity =>
         {
-            entity.HasKey(e => e.QueryId).HasName("PK__COM_Expe__5967F7FBBC815B6A");
+            entity.HasKey(e => e.ApprovalInstanceId).HasName("PK__APR_Appr__6F184C7300081207");
 
-            entity.ToTable("COM_ExpenseQuery");
+            entity.ToTable("APR_ApprovalInstance");
 
-            entity.Property(e => e.QueryId).HasColumnName("QueryID");
-            entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
-            entity.Property(e => e.IsRead).HasDefaultValue(false);
-            entity.Property(e => e.Message).HasMaxLength(1000);
-            entity.Property(e => e.SenderUserId).HasColumnName("SenderUserID");
-            entity.Property(e => e.SentAt)
-                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
-                .HasColumnType("datetime");
+            entity.Property(e => e.ApprovalInstanceId).HasColumnName("ApprovalInstanceID");
+            entity.Property(e => e.ActionAt).HasColumnType("datetime");
+            entity.Property(e => e.ApprovalLevelId).HasColumnName("ApprovalLevelID");
+            entity.Property(e => e.ApproverUserId).HasColumnName("ApproverUserID");
+            entity.Property(e => e.ReportId).HasColumnName("ReportID");
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
 
-            entity.HasOne(d => d.Expense).WithMany(p => p.ComExpenseQueries)
-                .HasForeignKey(d => d.ExpenseId)
+            entity.HasOne(d => d.ApprovalLevel).WithMany(p => p.AprApprovalInstances)
+                .HasForeignKey(d => d.ApprovalLevelId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__COM_Expen__Expen__3864608B");
+                .HasConstraintName("FK__APR_Appro__Appro__47A6A41B");
 
-            entity.HasOne(d => d.SenderUser).WithMany(p => p.ComExpenseQueries)
-                .HasForeignKey(d => d.SenderUserId)
+            entity.HasOne(d => d.ApproverUser).WithMany(p => p.AprApprovalInstances)
+                .HasForeignKey(d => d.ApproverUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__COM_Expen__Sende__395884C4");
+                .HasConstraintName("FK__APR_Appro__Appro__489AC854");
+
+            entity.HasOne(d => d.Report).WithMany(p => p.AprApprovalInstances)
+                .HasForeignKey(d => d.ReportId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__APR_Appro__Repor__46B27FE2");
+        });
+
+        modelBuilder.Entity<AprApprovalLevel>(entity =>
+        {
+            entity.HasKey(e => e.ApprovalLevelId).HasName("PK__APR_Appr__A485982A65272F71");
+
+            entity.ToTable("APR_ApprovalLevel");
+
+            entity.Property(e => e.ApprovalLevelId).HasColumnName("ApprovalLevelID");
+            entity.Property(e => e.ApprovalRuleId).HasColumnName("ApprovalRuleID");
+            entity.Property(e => e.ApproverRoleId).HasColumnName("ApproverRoleID");
+            entity.Property(e => e.SpecificUserId).HasColumnName("SpecificUserID");
+
+            entity.HasOne(d => d.ApprovalRule).WithMany(p => p.AprApprovalLevels)
+                .HasForeignKey(d => d.ApprovalRuleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__APR_Appro__Appro__43D61337");
+        });
+
+        modelBuilder.Entity<AprApprovalRule>(entity =>
+        {
+            entity.HasKey(e => e.ApprovalRuleId).HasName("PK__APR_Appr__1D43072908CCF343");
+
+            entity.ToTable("APR_ApprovalRule");
+
+            entity.Property(e => e.ApprovalRuleId).HasColumnName("ApprovalRuleID");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.MaxAmount).HasColumnType("decimal(14, 2)");
+            entity.Property(e => e.MinAmount).HasColumnType("decimal(14, 2)");
+            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
+            entity.Property(e => e.RuleName).HasMaxLength(150);
+
+            entity.HasOne(d => d.Organization).WithMany(p => p.AprApprovalRules)
+                .HasForeignKey(d => d.OrganizationId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__APR_Appro__Organ__3E1D39E1");
         });
 
         modelBuilder.Entity<ExpCategory>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__EXP_Cate__19093A2B34B6A9B7");
+            entity.HasKey(e => e.CategoryId).HasName("PK__EXP_Cate__19093A2BDE96BD61");
 
             entity.ToTable("EXP_Category");
 
@@ -95,526 +137,263 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.Property(e => e.Created).HasColumnType("datetime");
             entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
             entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Modified)
                 .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
                 .HasColumnType("datetime");
             entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
             entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ExpCategoryCreatedByUsers)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Categ__Creat__1F98B2C1");
+                .HasConstraintName("FK__EXP_Categ__Creat__1332DBDC");
 
             entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.ExpCategoryModifiedByUsers)
                 .HasForeignKey(d => d.ModifiedByUserId)
-                .HasConstraintName("FK__EXP_Categ__Modif__208CD6FA");
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Categ__Modif__14270015");
 
             entity.HasOne(d => d.Organization).WithMany(p => p.ExpCategories)
                 .HasForeignKey(d => d.OrganizationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Categ__Organ__1DB06A4F");
-
-            entity.HasOne(d => d.Project).WithMany(p => p.ExpCategories)
-                .HasForeignKey(d => d.ProjectId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Categ__Proje__1EA48E88");
+                .HasConstraintName("FK__EXP_Categ__Organ__114A936A");
         });
 
         modelBuilder.Entity<ExpExpense>(entity =>
         {
-            entity.HasKey(e => e.ExpenseId).HasName("PK__EXP_Expe__1445CFF34223D76F");
+            entity.HasKey(e => e.ExpenseId).HasName("PK__EXP_Expe__1445CFF3F0C86723");
 
             entity.ToTable("EXP_Expense");
 
             entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
             entity.Property(e => e.Amount).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.AttachmentUrl).HasMaxLength(25);
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.Created).HasColumnType("datetime");
             entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
             entity.Property(e => e.Currency)
                 .HasMaxLength(10)
                 .HasDefaultValue("INR");
-            entity.Property(e => e.ExpenseStatus)
-                .HasMaxLength(30)
-                .HasDefaultValue("submitted");
+            entity.Property(e => e.EmployeeId).HasColumnName("EmployeeID");
             entity.Property(e => e.Modified)
                 .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
             entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
             entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-            entity.Property(e => e.RejectionReason).HasMaxLength(500);
+            entity.Property(e => e.ReceiptUrl).HasMaxLength(25);
+            entity.Property(e => e.Status).HasDefaultValue((byte)1);
             entity.Property(e => e.Title).HasMaxLength(250);
-            entity.Property(e => e.UserId).HasColumnName("UserID");
 
             entity.HasOne(d => d.Category).WithMany(p => p.ExpExpenses)
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Expen__Categ__2EDAF651");
+                .HasConstraintName("FK__EXP_Expen__Categ__2180FB33");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ExpExpenseCreatedByUsers)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Expen__Creat__31B762FC");
+                .HasConstraintName("FK__EXP_Expen__Creat__245D67DE");
 
-            entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.ExpExpenseModifiedByUsers)
-                .HasForeignKey(d => d.ModifiedByUserId)
+            entity.HasOne(d => d.Employee).WithMany(p => p.ExpExpenseEmployees)
+                .HasForeignKey(d => d.EmployeeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Expen__Modif__32AB8735");
+                .HasConstraintName("FK__EXP_Expen__Emplo__1F98B2C1");
 
             entity.HasOne(d => d.Organization).WithMany(p => p.ExpExpenses)
                 .HasForeignKey(d => d.OrganizationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Expen__Organ__2BFE89A6");
+                .HasConstraintName("FK__EXP_Expen__Organ__1EA48E88");
 
             entity.HasOne(d => d.Project).WithMany(p => p.ExpExpenses)
                 .HasForeignKey(d => d.ProjectId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Expen__Proje__2DE6D218");
-
-            entity.HasOne(d => d.User).WithMany(p => p.ExpExpenseUsers)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Expen__UserI__2CF2ADDF");
+                .HasConstraintName("FK__EXP_Expen__Proje__208CD6FA");
         });
 
-        modelBuilder.Entity<ExpReport>(entity =>
+        modelBuilder.Entity<ExpExpenseRejection>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__EXP_Repo__D5BD48E52D8C23FB");
+            entity.HasKey(e => e.ExpenseRejectionId).HasName("PK__EXP_Expe__3E9E1C055D8032CD");
 
-            entity.ToTable("EXP_Report");
+            entity.ToTable("EXP_ExpenseRejection");
+
+            entity.Property(e => e.ExpenseRejectionId).HasColumnName("ExpenseRejectionID");
+            entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.RejectedAt)
+                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.RejectedByUserId).HasColumnName("RejectedByUserID");
+
+            entity.HasOne(d => d.Expense).WithMany(p => p.ExpExpenseRejections)
+                .HasForeignKey(d => d.ExpenseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Expen__Expen__3493CFA7");
+
+            entity.HasOne(d => d.RejectedByUser).WithMany(p => p.ExpExpenseRejections)
+                .HasForeignKey(d => d.RejectedByUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Expen__Rejec__3587F3E0");
+        });
+
+        modelBuilder.Entity<ExpExpenseReport>(entity =>
+        {
+            entity.HasKey(e => e.ReportId).HasName("PK__EXP_Expe__D5BD48E5976605FF");
+
+            entity.ToTable("EXP_ExpenseReport");
 
             entity.Property(e => e.ReportId).HasColumnName("ReportID");
-            entity.Property(e => e.AcceptedAmount).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.Created).HasColumnType("datetime");
             entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.ManagerId).HasColumnName("ManagerID");
             entity.Property(e => e.Modified)
                 .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
                 .HasColumnType("datetime");
             entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
             entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
             entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-            entity.Property(e => e.RejectedAmount).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.ReportStatus)
-                .HasMaxLength(30)
-                .HasDefaultValue("submitted");
             entity.Property(e => e.Title).HasMaxLength(150);
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.ViewedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ExpReportCreatedByUsers)
+            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ExpExpenseReportCreatedByUsers)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Repor__Creat__45BE5BA9");
+                .HasConstraintName("FK__EXP_Expen__Creat__2B0A656D");
 
-            entity.HasOne(d => d.Manager).WithMany(p => p.ExpReportManagers)
-                .HasForeignKey(d => d.ManagerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Repor__Manag__40F9A68C");
-
-            entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.ExpReportModifiedByUsers)
+            entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.ExpExpenseReportModifiedByUsers)
                 .HasForeignKey(d => d.ModifiedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Repor__Modif__46B27FE2");
+                .HasConstraintName("FK__EXP_Expen__Modif__2BFE89A6");
 
-            entity.HasOne(d => d.Organization).WithMany(p => p.ExpReports)
+            entity.HasOne(d => d.Organization).WithMany(p => p.ExpExpenseReports)
                 .HasForeignKey(d => d.OrganizationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Repor__Organ__40058253");
+                .HasConstraintName("FK__EXP_Expen__Organ__282DF8C2");
 
-            entity.HasOne(d => d.Project).WithMany(p => p.ExpReports)
+            entity.HasOne(d => d.Project).WithMany(p => p.ExpExpenseReports)
                 .HasForeignKey(d => d.ProjectId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__EXP_Repor__Proje__41EDCAC5");
+                .HasConstraintName("FK__EXP_Expen__Proje__29221CFB");
         });
 
-        modelBuilder.Entity<LogComExpenseQuery>(entity =>
+        modelBuilder.Entity<ExpPolicy>(entity =>
         {
-            entity.HasKey(e => e.LogexpenseId).HasName("PK__LOG_COM___1396EC433B74A47F");
+            entity.HasKey(e => e.PolicyId).HasName("PK__EXP_Poli__2E1339446B2BB7D3");
 
-            entity.ToTable("LOG_COM_ExpenseQuery");
+            entity.ToTable("EXP_Policy");
 
-            entity.Property(e => e.LogexpenseId).HasColumnName("LOGExpenseID");
-            entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.Message).HasMaxLength(1000);
-            entity.Property(e => e.QueryId).HasColumnName("QueryID");
-            entity.Property(e => e.SenderUserId).HasColumnName("SenderUserID");
-            entity.Property(e => e.SentAt).HasColumnType("datetime");
-        });
-
-        modelBuilder.Entity<LogErrorDbm>(entity =>
-        {
-            entity.HasKey(e => e.ErrorDbmsid).HasName("PK__LOG_Erro__C97849796A38A933");
-
-            entity.ToTable("LOG_ErrorDBMS");
-
-            entity.Property(e => e.ErrorDbmsid).HasColumnName("ErrorDBMSID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.ErrorMessage).HasMaxLength(4000);
-            entity.Property(e => e.ErrorProcedure).HasMaxLength(4000);
-            entity.Property(e => e.Spdetail)
-                .HasMaxLength(4000)
-                .IsUnicode(false)
-                .HasColumnName("SPDetail");
-            entity.Property(e => e.VerifiedOn).HasColumnType("datetime");
-            entity.Property(e => e.VerifiedRemarks).HasMaxLength(1000);
-        });
-
-        modelBuilder.Entity<LogExpCategory>(entity =>
-        {
-            entity.HasKey(e => e.LogcategoryId).HasName("PK__LOG_EXP___826DC51EFF8B6848");
-
-            entity.ToTable("LOG_EXP_Category");
-
-            entity.Property(e => e.LogcategoryId).HasColumnName("LOGCategoryID");
+            entity.Property(e => e.PolicyId).HasColumnName("PolicyID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.CategoryName).HasMaxLength(100);
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.Description).HasMaxLength(255);
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-        });
-
-        modelBuilder.Entity<LogExpExpense>(entity =>
-        {
-            entity.HasKey(e => e.LogexpenseId).HasName("PK__LOG_EXP___1396EC43F90D78B8");
-
-            entity.ToTable("LOG_EXP_Expense");
-
-            entity.Property(e => e.LogexpenseId).HasColumnName("LOGExpenseID");
-            entity.Property(e => e.Amount).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.AttachmentUrl).HasMaxLength(25);
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.Currency).HasMaxLength(10);
-            entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
-            entity.Property(e => e.ExpenseStatus).HasMaxLength(30);
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-            entity.Property(e => e.RejectionReason).HasMaxLength(500);
-            entity.Property(e => e.Title).HasMaxLength(250);
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-        });
-
-        modelBuilder.Entity<LogExpReport>(entity =>
-        {
-            entity.HasKey(e => e.LogorganizationId).HasName("PK__LOG_EXP___069D042F58DD22DF");
-
-            entity.ToTable("LOG_EXP_Report");
-
-            entity.Property(e => e.LogorganizationId).HasColumnName("LOGOrganizationID");
-            entity.Property(e => e.AcceptedAmount).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.ManagerId).HasColumnName("ManagerID");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-            entity.Property(e => e.RejectedAmount).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.ReportId).HasColumnName("ReportID");
-            entity.Property(e => e.ReportStatus).HasMaxLength(30);
-            entity.Property(e => e.Title).HasMaxLength(150);
-            entity.Property(e => e.ViewedAt).HasColumnType("datetime");
-        });
-
-        modelBuilder.Entity<LogOrgOrganization>(entity =>
-        {
-            entity.HasKey(e => e.LogorganizationId).HasName("PK__LOG_ORG___069D042F86518407");
-
-            entity.ToTable("LOG_ORG_Organization");
-
-            entity.Property(e => e.LogorganizationId).HasColumnName("LOGOrganizationID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.OrganizationName).HasMaxLength(100);
-        });
-
-        modelBuilder.Entity<LogProjProject>(entity =>
-        {
-            entity.HasKey(e => e.LogprojectsId).HasName("PK__LOG_PROJ__FFB6CA576D4F012F");
-
-            entity.ToTable("LOG_PROJ_Project");
-
-            entity.Property(e => e.LogprojectsId).HasColumnName("LOGProjectsID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.ManagerId).HasColumnName("ManagerID");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectDescription).HasMaxLength(500);
-            entity.Property(e => e.ProjectDetails).HasMaxLength(500);
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-            entity.Property(e => e.ProjectLogoUrl).HasMaxLength(250);
-            entity.Property(e => e.ProjectName).HasMaxLength(250);
-        });
-
-        modelBuilder.Entity<LogProjProjectMember>(entity =>
-        {
-            entity.HasKey(e => e.LogprojectMemberId).HasName("PK__LOG_PROJ__73616FE1CC96DD33");
-
-            entity.ToTable("LOG_PROJ_ProjectMember");
-
-            entity.Property(e => e.LogprojectMemberId).HasColumnName("LOGProjectMemberID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-        });
-
-        modelBuilder.Entity<LogSecRoleClaim>(entity =>
-        {
-            entity.HasKey(e => e.LogorganizationId).HasName("PK__LOG_SEC___069D042FD03431A3");
-
-            entity.ToTable("LOG_SEC_RoleClaim");
-
-            entity.Property(e => e.LogorganizationId).HasColumnName("LOGOrganizationID");
             entity.Property(e => e.Created).HasColumnType("datetime");
             entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
             entity.Property(e => e.Description).HasMaxLength(250);
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
+            entity.Property(e => e.MaxAmount).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.Modified)
+                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
+                .HasColumnType("datetime");
             entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.RoleClaimId).HasColumnName("RoleClaimID");
-            entity.Property(e => e.RoleId).HasColumnName("RoleID");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.ExpPolicies)
+                .HasForeignKey(d => d.CategoryId)
+                .HasConstraintName("FK__EXP_Polic__Categ__17F790F9");
+
+            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ExpPolicyCreatedByUsers)
+                .HasForeignKey(d => d.CreatedByUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Polic__Creat__19DFD96B");
+
+            entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.ExpPolicyModifiedByUsers)
+                .HasForeignKey(d => d.ModifiedByUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Polic__Modif__1AD3FDA4");
         });
 
-        modelBuilder.Entity<LogSecUser>(entity =>
+        modelBuilder.Entity<ExpReportExpense>(entity =>
         {
-            entity.HasKey(e => e.LogUserId).HasName("PK__LOG_SEC___96549365657C309E");
+            entity.HasKey(e => e.ReportExpenseId).HasName("PK__EXP_Repo__020DDA30B72D2457");
 
-            entity.ToTable("LOG_SEC_User");
+            entity.ToTable("EXP_ReportExpense");
 
-            entity.Property(e => e.LogUserId).HasColumnName("LOGUserID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.FirstName).HasMaxLength(50);
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.LastName).HasMaxLength(50);
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.Email).HasMaxLength(120);
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-            entity.Property(e => e.MobileNo).HasMaxLength(50);
-            entity.Property(e => e.UserName).HasMaxLength(150);
-            entity.Property(e => e.UserProfileImageUrl).HasMaxLength(500);
+            entity.HasIndex(e => new { e.ReportId, e.ExpenseId }, "UQ_ReportExpense").IsUnique();
+
+            entity.Property(e => e.ReportExpenseId).HasColumnName("ReportExpenseID");
+            entity.Property(e => e.ExpenseId).HasColumnName("ExpenseID");
+            entity.Property(e => e.ReportId).HasColumnName("ReportID");
+
+            entity.HasOne(d => d.Expense).WithMany(p => p.ExpReportExpenses)
+                .HasForeignKey(d => d.ExpenseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Repor__Expen__31B762FC");
+
+            entity.HasOne(d => d.Report).WithMany(p => p.ExpReportExpenses)
+                .HasForeignKey(d => d.ReportId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Repor__Repor__30C33EC3");
         });
 
-        modelBuilder.Entity<LogSecUserAuth>(entity =>
+        modelBuilder.Entity<ExpReportRejection>(entity =>
         {
-            entity.HasKey(e => e.LoguserAuthId).HasName("PK__LOG_SEC___5AAC1518BAB4BDB6");
+            entity.HasKey(e => e.ReportRejectionId).HasName("PK__EXP_Repo__9F16AE6598203DD5");
 
-            entity.ToTable("LOG_SEC_UserAuth");
+            entity.ToTable("EXP_ReportRejection");
 
-            entity.Property(e => e.LoguserAuthId).HasColumnName("LOGUserAuthID");
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.LastLogin).HasColumnType("datetime");
-            entity.Property(e => e.OrganizationId).HasColumnType("OrganizationID");
-            entity.Property(e => e.PasswordHash).HasMaxLength(255);
-            entity.Property(e => e.RefreshToken).HasMaxLength(250);
-            entity.Property(e => e.RefreshTokenExpiry).HasColumnType("datetime");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-        });
+            entity.Property(e => e.ReportRejectionId).HasColumnName("ReportRejectionID");
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.RejectedAt)
+                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.RejectedByUserId).HasColumnName("RejectedByUserID");
+            entity.Property(e => e.ReportId).HasColumnName("ReportID");
 
-        modelBuilder.Entity<LogSecUserRole>(entity =>
-        {
-            entity.HasKey(e => e.LogorganizationId).HasName("PK__LOG_SEC___069D042FC77CE1D9");
+            entity.HasOne(d => d.RejectedByUser).WithMany(p => p.ExpReportRejections)
+                .HasForeignKey(d => d.RejectedByUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Repor__Rejec__3A4CA8FD");
 
-            entity.ToTable("LOG_SEC_UserRole");
-
-            entity.Property(e => e.LogorganizationId).HasColumnName("LOGOrganizationID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.Iud)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("IUD");
-            entity.Property(e => e.IudbyUserId).HasColumnName("IUDByUserID");
-            entity.Property(e => e.IuddateTime)
-                .HasColumnType("datetime")
-                .HasColumnName("IUDDateTime");
-            entity.Property(e => e.Modified).HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-            entity.Property(e => e.UserRoleId).HasColumnName("UserRoleID");
-        });
-
-        modelBuilder.Entity<MstSpexecution>(entity =>
-        {
-            entity.HasKey(e => e.SpexecutionId).HasName("PK__MST_SPEx__78733736095011A3");
-
-            entity.ToTable("MST_SPExecution");
-
-            entity.Property(e => e.SpexecutionId).HasColumnName("SPExecutionID");
-            entity.Property(e => e.EndTime).HasColumnType("datetime");
-            entity.Property(e => e.ExecutionTimeMs).HasColumnName("ExecutionTimeMS");
-            entity.Property(e => e.Remarks).HasMaxLength(500);
-            entity.Property(e => e.Spname)
-                .HasMaxLength(200)
-                .HasColumnName("SPName");
-            entity.Property(e => e.StartTime).HasColumnType("datetime");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.HasOne(d => d.Report).WithMany(p => p.ExpReportRejections)
+                .HasForeignKey(d => d.ReportId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__EXP_Repor__Repor__395884C4");
         });
 
         modelBuilder.Entity<OrgOrganization>(entity =>
         {
-            entity.HasKey(e => e.OrganizationId).HasName("PK__ORG_Orga__CADB0B722E44CF29");
+            entity.HasKey(e => e.OrganizationId).HasName("PK__ORG_Orga__CADB0B7275C41587");
 
             entity.ToTable("ORG_Organization");
 
-            entity.HasIndex(e => e.OrganizationName, "UQ__ORG_Orga__F50959E41C5632A3").IsUnique();
+            entity.HasIndex(e => e.OrganizationName, "UQ__ORG_Orga__F50959E4B7A6D3E6").IsUnique();
 
             entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
             entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
             entity.Property(e => e.Modified)
                 .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
             entity.Property(e => e.OrganizationName).HasMaxLength(100);
-
-            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.OrgOrganizationCreatedByUsers)
-                .HasForeignKey(d => d.CreatedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ORG_Organ__Creat__6A30C649");
-
-            entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.OrgOrganizationModifiedByUsers)
-                .HasForeignKey(d => d.ModifiedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ORG_Organ__Modif__6B24EA82");
         });
 
-        modelBuilder.Entity<ProjExpensePolicy>(entity =>
+        modelBuilder.Entity<PayPayout>(entity =>
         {
-            entity.HasKey(e => e.PolicyId).HasName("PK__PROJ_Exp__2E13394431904DD5");
+            entity.HasKey(e => e.PayoutId).HasName("PK__PAY_Payo__35C3DFAE39E67E47");
 
-            entity.ToTable("PROJ_ExpensePolicy");
+            entity.ToTable("PAY_Payout");
 
-            entity.Property(e => e.PolicyId).HasColumnName("PolicyID");
-            entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
-            entity.Property(e => e.Created)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Description).HasMaxLength(250);
-            entity.Property(e => e.MaxAmount).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.PayoutId).HasColumnName("PayoutID");
+            entity.Property(e => e.PaidAmount).HasColumnType("decimal(14, 2)");
+            entity.Property(e => e.PaidOn).HasColumnType("datetime");
+            entity.Property(e => e.ReferenceNo).HasMaxLength(100);
+            entity.Property(e => e.ReportId).HasColumnName("ReportID");
 
-            entity.HasOne(d => d.Category).WithMany(p => p.ProjExpensePolicies)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK__PROJ_Expe__Categ__2739D489");
-
-            entity.HasOne(d => d.Project).WithMany(p => p.ProjExpensePolicies)
-                .HasForeignKey(d => d.ProjectId)
+            entity.HasOne(d => d.Report).WithMany(p => p.PayPayouts)
+                .HasForeignKey(d => d.ReportId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Expe__Proje__2645B050");
+                .HasConstraintName("FK__PAY_Payou__Repor__503BEA1C");
         });
 
         modelBuilder.Entity<ProjProject>(entity =>
         {
-            entity.HasKey(e => e.ProjectId).HasName("PK__PROJ_Pro__761ABED07EB7813A");
+            entity.HasKey(e => e.ProjectId).HasName("PK__PROJ_Pro__761ABED06E1301CB");
 
             entity.ToTable("PROJ_Project");
 
-            entity.HasIndex(e => new { e.ProjectName, e.OrganizationId }, "PROJ_Project_ORG").IsUnique();
+            entity.HasIndex(e => new { e.OrganizationId, e.ProjectName }, "PROJ_ORG_Project").IsUnique();
 
             entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
             entity.Property(e => e.Created).HasColumnType("datetime");
@@ -634,71 +413,50 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ProjProjectCreatedByUsers)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Creat__0E6E26BF");
+                .HasConstraintName("FK__PROJ_Proj__Creat__0B91BA14");
 
             entity.HasOne(d => d.Manager).WithMany(p => p.ProjProjectManagers)
                 .HasForeignKey(d => d.ManagerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Manag__0D7A0286");
+                .HasConstraintName("FK__PROJ_Proj__Manag__09A971A2");
 
             entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.ProjProjectModifiedByUsers)
                 .HasForeignKey(d => d.ModifiedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Modif__0F624AF8");
+                .HasConstraintName("FK__PROJ_Proj__Modif__0C85DE4D");
 
             entity.HasOne(d => d.Organization).WithMany(p => p.ProjProjects)
                 .HasForeignKey(d => d.OrganizationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Organ__0C85DE4D");
+                .HasConstraintName("FK__PROJ_Proj__Organ__08B54D69");
         });
 
-        modelBuilder.Entity<ProjProjectMember>(entity =>
+        modelBuilder.Entity<SecDelegateApprover>(entity =>
         {
-            entity.HasKey(e => e.ProjectMemberId).HasName("PK__PROJ_Pro__E4E9983C3384D229");
+            entity.HasKey(e => e.DelegateId).HasName("PK__SEC_Dele__013A454B65FF5F30");
 
-            entity.ToTable("PROJ_ProjectMember");
+            entity.ToTable("SEC_DelegateApprover");
 
-            entity.Property(e => e.ProjectMemberId).HasColumnName("ProjectMemberID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.Modified)
-                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.DelegateId).HasColumnName("DelegateID");
+            entity.Property(e => e.DelegateUserId).HasColumnName("DelegateUserID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.ValidFrom).HasColumnType("datetime");
+            entity.Property(e => e.ValidTo).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Organization).WithMany(p => p.ProjProjectMembers)
-                .HasForeignKey(d => d.OrganizationId)
+            entity.HasOne(d => d.DelegateUser).WithMany(p => p.SecDelegateApproverDelegateUsers)
+                .HasForeignKey(d => d.DelegateUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Organ__17036CC0");
+                .HasConstraintName("FK__SEC_Deleg__Deleg__4D5F7D71");
 
-            entity.HasOne(d => d.Project).WithMany(p => p.ProjProjectMembers)
-                .HasForeignKey(d => d.ProjectId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Proje__160F4887");
-
-            entity.HasOne(d => d.User).WithMany(p => p.ProjProjectMembers)
+            entity.HasOne(d => d.User).WithMany(p => p.SecDelegateApproverUsers)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__UserI__17F790F9");
-        });
-
-        modelBuilder.Entity<SecOperation>(entity =>
-        {
-            entity.HasKey(e => e.OperationId).HasName("PK__SEC_Oper__A4F5FC6459503172");
-
-            entity.ToTable("SEC_Operation");
-
-            entity.Property(e => e.OperationId)
-                .ValueGeneratedNever()
-                .HasColumnName("OperationID");
-            entity.Property(e => e.Description).HasMaxLength(250);
-            entity.Property(e => e.OperationName).HasMaxLength(250);
+                .HasConstraintName("FK__SEC_Deleg__UserI__4C6B5938");
         });
 
         modelBuilder.Entity<SecRole>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__SEC_Role__8AFACE3A5F88263D");
+            entity.HasKey(e => e.RoleId).HasName("PK__SEC_Role__8AFACE3A31192DF2");
 
             entity.ToTable("SEC_Role");
 
@@ -715,48 +473,39 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
             entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
             entity.Property(e => e.RoleName).HasMaxLength(50);
+            entity.Property(e => e.ValidFrom).HasColumnType("datetime");
+            entity.Property(e => e.ValidTo).HasColumnType("datetime");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.SecRoleCreatedByUsers)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_Role__Create__778AC167");
+                .HasConstraintName("FK__SEC_Role__Create__75A278F5");
 
             entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.SecRoleModifiedByUsers)
                 .HasForeignKey(d => d.ModifiedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_Role__Modifi__787EE5A0");
+                .HasConstraintName("FK__SEC_Role__Modifi__76969D2E");
 
             entity.HasOne(d => d.Organization).WithMany(p => p.SecRoles)
                 .HasForeignKey(d => d.OrganizationId)
-                .HasConstraintName("FK__SEC_Role__Organi__76969D2E");
+                .HasConstraintName("FK__SEC_Role__Organi__74AE54BC");
         });
 
         modelBuilder.Entity<SecRoleClaim>(entity =>
         {
-            entity.HasKey(e => e.RoleClaimId).HasName("PK__SEC_Role__BB90E97636D64882");
+            entity.HasKey(e => e.RoleClaimId).HasName("PK__SEC_Role__BB90E9762843233E");
 
             entity.ToTable("SEC_RoleClaim");
 
             entity.Property(e => e.RoleClaimId).HasColumnName("RoleClaimID");
-            entity.Property(e => e.ClaimValue).HasMaxLength(200);
-            entity.Property(e => e.ClaminType).HasMaxLength(200);
             entity.Property(e => e.Created).HasColumnType("datetime");
             entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.Modified)
-                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
             entity.Property(e => e.RoleId).HasColumnName("RoleID");
 
-            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.SecRoleClaimCreatedByUsers)
+            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.SecRoleClaims)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__SEC_RoleC__Creat__7D439ABD");
-
-            entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.SecRoleClaimModifiedByUsers)
-                .HasForeignKey(d => d.ModifiedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_RoleC__Modif__7E37BEF6");
 
             entity.HasOne(d => d.Role).WithMany(p => p.SecRoleClaims)
                 .HasForeignKey(d => d.RoleId)
@@ -766,50 +515,52 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
         modelBuilder.Entity<SecUser>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__SEC_User__1788CCAC69E512E5");
+            entity.HasKey(e => e.UserId).HasName("PK__SEC_User__1788CCAC3EC1AB1D");
 
             entity.ToTable("SEC_User");
 
-            entity.HasIndex(e => e.Email, "UQ__SEC_User__08638DF858550AC5").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__SEC_User__A9D10534D2002D7E").IsUnique();
 
-            entity.HasIndex(e => e.MobileNo, "UQ__SEC_User__1D6F012637269705").IsUnique();
+            entity.HasIndex(e => e.MobileNo, "UQ__SEC_User__D6D73A86328ED36B").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("UserID");
             entity.Property(e => e.Created).HasColumnType("datetime");
             entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
+            entity.Property(e => e.DisplayName).HasMaxLength(110);
+            entity.Property(e => e.Email).HasMaxLength(120);
             entity.Property(e => e.FirstName).HasMaxLength(50);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.LastName).HasMaxLength(50);
+            entity.Property(e => e.MobileNo).HasMaxLength(50);
             entity.Property(e => e.Modified)
                 .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
                 .HasColumnType("datetime");
             entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.Email).HasMaxLength(120);
-            entity.Property(e => e.MobileNo).HasMaxLength(50);
-            entity.Property(e => e.UserName).HasMaxLength(150);
-            entity.Property(e => e.UserProfileImageUrl).HasMaxLength(500);
+            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
+            entity.Property(e => e.ProfileImageUrl).HasMaxLength(500);
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.InverseCreatedByUser)
                 .HasForeignKey(d => d.CreatedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_User__Create__628FA481");
+                .HasConstraintName("FK__SEC_User__Create__6477ECF3");
 
             entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.InverseModifiedByUser)
                 .HasForeignKey(d => d.ModifiedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_User__Modifi__6383C8BA");
+                .HasConstraintName("FK__SEC_User__Modifi__656C112C");
+
+            entity.HasOne(d => d.Organization).WithMany(p => p.SecUsers)
+                .HasForeignKey(d => d.OrganizationId)
+                .HasConstraintName("FK__SEC_User__Organi__628FA481");
         });
 
         modelBuilder.Entity<SecUserAuth>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__SEC_User__1788CCACC0680279");
+            entity.HasKey(e => e.UserId).HasName("PK__SEC_User__1788CCACE9656E9A");
 
             entity.ToTable("SEC_UserAuth");
 
             entity.Property(e => e.UserId)
                 .ValueGeneratedNever()
                 .HasColumnName("UserID");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
             entity.Property(e => e.LastLogin).HasColumnType("datetime");
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.RefreshToken).HasMaxLength(250);
@@ -818,44 +569,94 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasOne(d => d.User).WithOne(p => p.SecUserAuth)
                 .HasForeignKey<SecUserAuth>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_UserA__UserI__70DDC3D8");
+                .HasConstraintName("FK__SEC_UserA__UserI__693CA210");
+        });
 
-            entity.HasOne(d => d.Organization).WithMany(p => p.SecUserAuth)
-                .HasForeignKey(d => d.OrganizationId)
+        modelBuilder.Entity<SecUserManager>(entity =>
+        {
+            entity.HasKey(e => e.UserManagerId).HasName("PK__SEC_User__96A0B52D8AD61BCA");
+
+            entity.ToTable("SEC_UserManager");
+
+            entity.HasIndex(e => new { e.UserId, e.ManagerId, e.ManagerType }, "UQ_User_Manager").IsUnique();
+
+            entity.Property(e => e.UserManagerId).HasColumnName("UserManagerID");
+            entity.Property(e => e.ManagerId).HasColumnName("ManagerID");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.ValidFrom)
+                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ValidTo).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Manager).WithMany(p => p.SecUserManagerManagers)
+                .HasForeignKey(d => d.ManagerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_UserA__Organ__607251E5");
+                .HasConstraintName("FK__SEC_UserM__Manag__6EF57B66");
+
+            entity.HasOne(d => d.User).WithMany(p => p.SecUserManagerUsers)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__SEC_UserM__UserI__6E01572D");
         });
 
         modelBuilder.Entity<SecUserRole>(entity =>
         {
-            entity.HasKey(e => e.UserRoleId).HasName("PK__SEC_User__3D978A55BD9594BD");
+            entity.HasKey(e => e.UserRoleId).HasName("PK__SEC_User__3D978A55A35A4583");
 
             entity.ToTable("SEC_UserRole");
 
-            entity.Property(e => e.UserRoleId)
-                .ValueGeneratedNever()
-                .HasColumnName("UserRoleID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
+            entity.Property(e => e.UserRoleId).HasColumnName("UserRoleID");
+            entity.Property(e => e.Created)
+                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
+                .HasColumnType("datetime");
             entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
             entity.Property(e => e.Modified)
                 .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
                 .HasColumnType("datetime");
             entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
+            entity.Property(e => e.RoleId).HasColumnName("RoleID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.SecUserRoleCreatedByUsers)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_UserR__Creat__04E4BC85");
+                .HasConstraintName("FK__SEC_UserR__Creat__02084FDA");
 
             entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.SecUserRoleModifiedByUsers)
                 .HasForeignKey(d => d.ModifiedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__SEC_UserR__Modif__05D8E0BE");
+                .HasConstraintName("FK__SEC_UserR__Modif__02FC7413");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.SecUserRoles)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__SEC_UserR__RoleI__01142BA1");
 
             entity.HasOne(d => d.User).WithMany(p => p.SecUserRoleUsers)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__SEC_UserR__UserI__03F0984C");
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__SEC_UserR__UserI__00200768");
+        });
+
+        modelBuilder.Entity<SysAuditLog>(entity =>
+        {
+            entity.HasKey(e => e.AuditLogId).HasName("PK__SYS_Audi__EB5F6CDD4B475BE4");
+
+            entity.ToTable("SYS_AuditLog");
+
+            entity.Property(e => e.AuditLogId).HasColumnName("AuditLogID");
+            entity.Property(e => e.Action).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.EntityId).HasColumnName("EntityID");
+            entity.Property(e => e.EntityType).HasMaxLength(50);
+            entity.Property(e => e.Ipaddress)
+                .HasMaxLength(45)
+                .HasColumnName("IPAddress");
+            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
+            entity.Property(e => e.UserAgent).HasMaxLength(300);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
         });
     }
 }

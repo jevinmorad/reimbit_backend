@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using Reimbit.Contracts.Security.Account;
+using Reimbit.Contracts.Account;
 
 namespace Reimbit.Application.Security.Account.Validators;
 

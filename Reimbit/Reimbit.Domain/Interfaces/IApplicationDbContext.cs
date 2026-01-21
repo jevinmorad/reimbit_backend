@@ -5,37 +5,47 @@ namespace Reimbit.Domain.Interfaces;
 
 public interface IApplicationDbContext
 {
-    DbSet<SecUser> SecUsers { get; }
-    DbSet<SecUserAuth> SecUserAuths { get; }
-    DbSet<SecUserRole> SecUserRoles { get; }
-    DbSet<SecRole> SecRoles { get; }
-    DbSet<SecRoleClaim> SecRoleClaims { get; }
-    DbSet<SecOperation> SecOperations { get; }
+    DbSet<AprApprovalInstance> AprApprovalInstances { get; set; }
 
-    DbSet<OrgOrganization> OrgOrganizations { get; }
-    DbSet<ProjProject> ProjProjects { get; }
-    DbSet<ProjProjectMember> ProjProjectMembers { get; }
-    DbSet<ProjExpensePolicy> ProjExpensePolicies { get; }
+    DbSet<AprApprovalLevel> AprApprovalLevels { get; set; }
 
-    DbSet<ExpCategory> ExpCategories { get; }
-    DbSet<ExpExpense> ExpExpenses { get; }
-    DbSet<ExpReport> ExpReports { get; }
-    DbSet<ComExpenseQuery> ComExpenseQueries { get; }
+    DbSet<AprApprovalRule> AprApprovalRules { get; set; }
 
-    DbSet<LogComExpenseQuery> LogComExpenseQueries { get; }
-    DbSet<LogErrorDbm> LogErrorDbms { get; }
-    DbSet<LogExpCategory> LogExpCategories { get; }
-    DbSet<LogExpExpense> LogExpExpenses { get; }
-    DbSet<LogExpReport> LogExpReports { get; }
-    DbSet<LogOrgOrganization> LogOrgOrganizations { get; }
-    DbSet<LogProjProject> LogProjProjects { get; }
-    DbSet<LogProjProjectMember> LogProjProjectMembers { get; }
-    DbSet<LogSecRoleClaim> LogSecRoleClaims { get; }
-    DbSet<LogSecUser> LogSecUsers { get; }
-    DbSet<LogSecUserAuth> LogSecUserAuths { get; }
-    DbSet<LogSecUserRole> LogSecUserRoles { get; }
+    DbSet<ExpCategory> ExpCategories { get; set; }
 
-    DbSet<MstSpexecution> MstSpexecutions { get; }
+    DbSet<ExpExpense> ExpExpenses { get; set; }
+
+    DbSet<ExpExpenseRejection> ExpExpenseRejections { get; set; }
+
+    DbSet<ExpExpenseReport> ExpExpenseReports { get; set; }
+
+    DbSet<ExpPolicy> ExpPolicies { get; set; }
+
+    DbSet<ExpReportExpense> ExpReportExpenses { get; set; }
+
+    DbSet<ExpReportRejection> ExpReportRejections { get; set; }
+
+    DbSet<OrgOrganization> OrgOrganizations { get; set; }
+
+    DbSet<PayPayout> PayPayouts { get; set; }
+
+    DbSet<ProjProject> ProjProjects { get; set; }
+
+    DbSet<SecDelegateApprover> SecDelegateApprovers { get; set; }
+
+    DbSet<SecRole> SecRoles { get; set; }
+
+    DbSet<SecRoleClaim> SecRoleClaims { get; set; }
+
+    DbSet<SecUser> SecUsers { get; set; }
+
+    DbSet<SecUserAuth> SecUserAuths { get; set; }
+
+    DbSet<SecUserManager> SecUserManagers { get; set; }
+
+    DbSet<SecUserRole> SecUserRoles { get; set; }
+
+    DbSet<SysAuditLog> SysAuditLogs { get; set; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     int SaveChanges();

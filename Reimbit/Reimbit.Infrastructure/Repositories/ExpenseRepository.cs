@@ -2,6 +2,7 @@
 using Common.Data.Models;
 using ErrorOr;
 using Microsoft.EntityFrameworkCore;
+using Reimbit.Application.Audit;
 using Reimbit.Contracts.Expenses;
 using Reimbit.Domain.Interfaces;
 using Reimbit.Domain.Models;
@@ -9,7 +10,10 @@ using Reimbit.Domain.Repositories;
 
 namespace Reimbit.Infrastructure.Repositories;
 
-public class ExpenseRepository(IApplicationDbContext context) : IExpenseRepository
+public class ExpenseRepository(
+    IApplicationDbContext context,
+    IAuditLogger auditLogger
+) : IExpenseRepository
 {
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseRequest request)
     {
@@ -23,52 +27,52 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
             var expense = new ExpExpense
             {
                 OrganizationId = request.OrganizationId,
-                UserId = request.UserId,
-                ProjectId = request.ProjectId,
+                EmployeeId = request.UserId,
+                ProjectId = request.ProjectId ?? null,
                 CategoryId = request.CategoryId,
                 Title = request.Title,
                 Amount = request.Amount,
                 Currency = request.Currency ?? "INR",
-                AttachmentUrl = request.AttachmentUrl ?? "",
+                ReceiptUrl = request.ReceiptUrl ?? string.Empty,
                 Description = request.Description,
-                ExpenseStatus = request.ExpenseStatus,
+                Status = (byte)ExpenseStatus.Draft,
                 CreatedByUserId = request.CreatedByUserId,
-                ModifiedByUserId = request.ModifiedByUserId,
                 Created = request.Created,
                 Modified = request.Modified
             };
 
             await context.ExpExpenses.AddAsync(expense);
-            await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync(default);
 
-            var logExpense = new LogExpExpense
-            {
-                Iud = "I",
-                IuddateTime = request.Created,
-                IudbyUserId = request.CreatedByUserId,
-                ExpenseId = expense.ExpenseId,
-                OrganizationId = expense.OrganizationId,
-                UserId = expense.UserId,
-                ProjectId = expense.ProjectId,
-                CategoryId = expense.CategoryId,
-                Title = expense.Title,
-                Amount = expense.Amount,
-                Currency = expense.Currency,
-                AttachmentUrl = expense.AttachmentUrl,
-                Description = expense.Description,
-                ExpenseStatus = expense.ExpenseStatus,
-                CreatedByUserId = expense.CreatedByUserId,
-                ModifiedByUserId = expense.ModifiedByUserId,
-                Created = expense.Created,
-                Modified = expense.Modified
-            };
-
-            await context.LogExpExpenses.AddAsync(logExpense);
-            await context.SaveChangesAsync(default);
+            await auditLogger.WriteAsync(
+                entityType: "EXP_Expense",
+                entityId: expense.ExpenseId,
+                action: "CREATE",
+                organizationId: expense.OrganizationId,
+                userId: request.CreatedByUserId,
+                oldValue: null,
+                newValue: new
+                {
+                    expense.ExpenseId,
+                    expense.OrganizationId,
+                    expense.EmployeeId,
+                    expense.ProjectId,
+                    expense.CategoryId,
+                    expense.Title,
+                    expense.Amount,
+                    expense.Currency,
+                    expense.ReceiptUrl,
+                    expense.Status,
+                    expense.Created,
+                    expense.Modified
+                },
+                ipAddress: null,
+                userAgent: null);
 
             await tx.CommitAsync();
 
             response.Id = expense.ExpenseId;
+            response.RowsAffected = rowsAffected;
             return response;
         }
         catch (Exception ex)
@@ -81,49 +85,20 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(EncryptedInt userId)
     {
         var query = context.ExpExpenses
+            .AsNoTracking()
             .Include(x => x.Project)
             .Include(x => x.Category)
-            .Where(x => x.UserId == (int)userId)
+            .Where(x => x.EmployeeId == (int)userId)
             .Select(x => new ListExpensesResponse
             {
                 ExpenseId = x.ExpenseId,
-                ProjectId = x.ProjectId,
-                ProjectName = x.Project.ProjectName,
+                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
                 CategoryId = x.CategoryId,
                 CategoryName = x.Category.CategoryName,
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
-                ExpenseStatus = x.ExpenseStatus,
-                Created = x.Created
-            });
-
-        var data = await query.ToListAsync();
-
-        return new PagedResult<ListExpensesResponse>
-        {
-            Data = data,
-            Total = data.Count
-        };
-    }
-
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId)
-    {
-        var query = context.ExpExpenses
-            .Include(x => x.Project)
-            .Include(x => x.Category)
-            .Where(x => x.ProjectId == (int)projectId)
-            .Select(x => new ListExpensesResponse
-            {
-                ExpenseId = x.ExpenseId,
-                ProjectId = x.ProjectId,
-                ProjectName = x.Project.ProjectName,
-                CategoryId = x.CategoryId,
-                CategoryName = x.Category.CategoryName,
-                Title = x.Title,
-                Amount = x.Amount,
-                Currency = x.Currency,
-                ExpenseStatus = x.ExpenseStatus,
+                Status = x.Status,
                 Created = x.Created
             });
 
@@ -139,20 +114,49 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization(int organizationId)
     {
         var query = context.ExpExpenses
+            .AsNoTracking()
             .Include(x => x.Project)
             .Include(x => x.Category)
             .Where(x => x.OrganizationId == organizationId)
             .Select(x => new ListExpensesResponse
             {
                 ExpenseId = x.ExpenseId,
-                ProjectId = x.ProjectId,
-                ProjectName = x.Project.ProjectName,
+                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
                 CategoryId = x.CategoryId,
                 CategoryName = x.Category.CategoryName,
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
-                ExpenseStatus = x.ExpenseStatus,
+                Status = x.Status,
+                Created = x.Created
+            });
+
+        var data = await query.ToListAsync();
+
+        return new PagedResult<ListExpensesResponse>
+        {
+            Data = data,
+            Total = data.Count
+        };
+    }
+
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId)
+    {
+        var query = context.ExpExpenses
+            .AsNoTracking()
+            .Include(x => x.Project)
+            .Include(x => x.Category)
+            .Where(x => x.ProjectId == projectId)
+            .Select(x => new ListExpensesResponse
+            {
+                ExpenseId = x.ExpenseId,
+                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
+                CategoryId = x.CategoryId,
+                CategoryName = x.Category.CategoryName,
+                Title = x.Title,
+                Amount = x.Amount,
+                Currency = x.Currency,
+                Status = x.Status,
                 Created = x.Created
             });
 
@@ -174,58 +178,67 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
 
         try
         {
-            int id = request.ExpenseId;
-            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == id);
+            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x =>
+                x.ExpenseId == request.ExpenseId &&
+                x.OrganizationId == request.OrganizationId);
 
             if (expense == null)
             {
                 return Error.NotFound("Expense.NotFound", "Expense not found");
             }
 
-            if (expense.ExpenseStatus != "submitted" && expense.ExpenseStatus != "rejected")
+            if (expense.Status != (byte)ExpenseStatus.Draft && expense.Status != (byte)ExpenseStatus.Rejected)
             {
-                return Error.Validation("Expense.Update.NotAllowed", "Only submitted or rejected expenses can be updated.");
+                return Error.Validation("Expense.Update.NotAllowed", "Only draft/rejected expenses can be updated.");
             }
 
-            expense.ProjectId = request.ProjectId;
+            var oldValue = new
+            {
+                expense.CategoryId,
+                expense.Title,
+                expense.Amount,
+                expense.Currency,
+                expense.ReceiptUrl,
+                expense.Description,
+                expense.Status,
+                expense.Modified
+            };
+
             expense.CategoryId = request.CategoryId;
             expense.Title = request.Title;
             expense.Amount = request.Amount;
             expense.Currency = request.Currency ?? "INR";
-            expense.AttachmentUrl = request.AttachmentUrl ?? "";
+            expense.ReceiptUrl = request.ReceiptUrl ?? string.Empty;
             expense.Description = request.Description;
-            expense.ExpenseStatus = request.ExpenseStatus;
-            expense.ModifiedByUserId = request.ModifiedByUserId;
             expense.Modified = request.Modified;
 
-            var logExpense = new LogExpExpense
-            {
-                Iud = "U",
-                IuddateTime = request.Modified,
-                IudbyUserId = request.ModifiedByUserId,
-                ExpenseId = expense.ExpenseId,
-                OrganizationId = expense.OrganizationId,
-                UserId = expense.UserId,
-                ProjectId = expense.ProjectId,
-                CategoryId = expense.CategoryId,
-                Title = expense.Title,
-                Amount = expense.Amount,
-                Currency = expense.Currency,
-                AttachmentUrl = expense.AttachmentUrl,
-                Description = expense.Description,
-                ExpenseStatus = expense.ExpenseStatus,
-                CreatedByUserId = expense.CreatedByUserId,
-                ModifiedByUserId = expense.ModifiedByUserId,
-                Created = expense.Created,
-                Modified = expense.Modified
-            };
+            var rowsAffected = await context.SaveChangesAsync(default);
 
-            await context.LogExpExpenses.AddAsync(logExpense);
-            await context.SaveChangesAsync(default);
+            await auditLogger.WriteAsync(
+                entityType: "EXP_Expense",
+                entityId: expense.ExpenseId,
+                action: "UPDATE",
+                organizationId: expense.OrganizationId,
+                userId: request.ModifiedByUserId,
+                oldValue: oldValue,
+                newValue: new
+                {
+                    expense.CategoryId,
+                    expense.Title,
+                    expense.Amount,
+                    expense.Currency,
+                    expense.ReceiptUrl,
+                    expense.Description,
+                    expense.Status,
+                    expense.Modified
+                },
+                ipAddress: null,
+                userAgent: null);
 
             await tx.CommitAsync();
 
             response.Id = expense.ExpenseId;
+            response.RowsAffected = rowsAffected;
             return response;
         }
         catch (Exception ex)
@@ -244,49 +257,52 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
 
         try
         {
-            int id = expenseId;
-            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == id);
+            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == expenseId);
 
             if (expense == null)
             {
                 return Error.NotFound("Expense.NotFound", "Expense not found");
             }
 
-            if (expense.ExpenseStatus != "submitted")
+            if (expense.Status != (byte)ExpenseStatus.Draft)
             {
-                return Error.Validation("Expense.Delete.NotAllowed", "Only submitted expenses can be deleted.");
+                return Error.Validation("Expense.Delete.NotAllowed", "Only draft expenses can be deleted.");
             }
 
             context.ExpExpenses.Remove(expense);
 
-            var logExpense = new LogExpExpense
-            {
-                Iud = "D",
-                IuddateTime = DateTime.UtcNow,
-                IudbyUserId = 0,
-                ExpenseId = expense.ExpenseId,
-                OrganizationId = expense.OrganizationId,
-                UserId = expense.UserId,
-                ProjectId = expense.ProjectId,
-                CategoryId = expense.CategoryId,
-                Title = expense.Title,
-                Amount = expense.Amount,
-                Currency = expense.Currency,
-                AttachmentUrl = expense.AttachmentUrl,
-                Description = expense.Description,
-                ExpenseStatus = expense.ExpenseStatus,
-                CreatedByUserId = expense.CreatedByUserId,
-                ModifiedByUserId = expense.ModifiedByUserId,
-                Created = expense.Created,
-                Modified = expense.Modified
-            };
+            var rowsAffected = await context.SaveChangesAsync(default);
 
-            await context.LogExpExpenses.AddAsync(logExpense);
-            await context.SaveChangesAsync(default);
+            await auditLogger.WriteAsync(
+                entityType: "EXP_Expense",
+                entityId: expense.ExpenseId,
+                action: "DELETE",
+                organizationId: expense.OrganizationId,
+                userId: expense.EmployeeId,
+                oldValue: new
+                {
+                    expense.ExpenseId,
+                    expense.OrganizationId,
+                    expense.EmployeeId,
+                    expense.ProjectId,
+                    expense.CategoryId,
+                    expense.Title,
+                    expense.Amount,
+                    expense.Currency,
+                    expense.ReceiptUrl,
+                    expense.Description,
+                    expense.Status,
+                    expense.Created,
+                    expense.Modified
+                },
+                newValue: null,
+                ipAddress: null,
+                userAgent: null);
 
             await tx.CommitAsync();
 
             response.Id = expense.ExpenseId;
+            response.RowsAffected = rowsAffected;
             return response;
         }
         catch (Exception ex)
@@ -298,25 +314,23 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
 
     public async Task<ErrorOr<GetExpenseResponse>> Get(EncryptedInt expenseId)
     {
-        int id = expenseId;
         var expense = await context.ExpExpenses
+            .AsNoTracking()
             .Include(x => x.Project)
             .Include(x => x.Category)
-            .Where(x => x.ExpenseId == id)
+            .Where(x => x.ExpenseId == (int)expenseId)
             .Select(x => new GetExpenseResponse
             {
                 ExpenseId = x.ExpenseId,
-                ProjectId = x.ProjectId,
-                ProjectName = x.Project.ProjectName,
+                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
                 CategoryId = x.CategoryId,
                 CategoryName = x.Category.CategoryName,
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
-                AttachmentUrl = x.AttachmentUrl,
+                ReceiptUrl = x.ReceiptUrl,
                 Description = x.Description,
-                ExpenseStatus = x.ExpenseStatus,
-                RejectionReason = x.RejectionReason,
+                Status = x.Status,
                 Created = x.Created
             })
             .FirstOrDefaultAsync();
@@ -331,31 +345,30 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
 
     public async Task<ErrorOr<ViewExpenseResponse>> View(EncryptedInt expenseId)
     {
-        int id = expenseId;
         var expense = await context.ExpExpenses
+            .AsNoTracking()
             .Include(x => x.Project)
             .Include(x => x.Category)
-            .Include(x => x.User)
+            .Include(x => x.Employee)
             .Include(x => x.CreatedByUser)
-            .Include(x => x.ModifiedByUser)
-            .Where(x => x.ExpenseId == id)
+            .Where(x => x.ExpenseId == expenseId)
             .Select(x => new ViewExpenseResponse
             {
                 ExpenseId = x.ExpenseId,
-                Title = x.Title ?? string.Empty,
+                Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
                 Description = x.Description,
-                AttachmentUrl = x.AttachmentUrl,
-                ExpenseStatus = x.ExpenseStatus,
-                RejectionReason = x.RejectionReason,
-                ProjectId = x.ProjectId,
-                ProjectName = x.Project.ProjectName,
+                AttachmentUrl = x.ReceiptUrl,
+                ExpenseStatus = x.Status.ToString(),
+                RejectionReason = null,
+                ProjectId = x.ProjectId ?? 0,
+                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
                 CategoryId = x.CategoryId,
                 CategoryName = x.Category.CategoryName,
-                UserDisplayName = $"{x.User.FirstName} {x.User.LastName}",
+                UserDisplayName = $"{x.Employee.FirstName} {x.Employee.LastName}",
                 CreatedByUserDisplayName = $"{x.CreatedByUser.FirstName} {x.CreatedByUser.LastName}",
-                ModifiedByUserDisplayName = $"{x.ModifiedByUser.FirstName} {x.ModifiedByUser.LastName}",
+                ModifiedByUserDisplayName = $"{x.CreatedByUser.FirstName} {x.CreatedByUser.LastName}",
                 Created = x.Created,
                 Modified = x.Modified
             })
@@ -369,131 +382,11 @@ public class ExpenseRepository(IApplicationDbContext context) : IExpenseReposito
         return expense;
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(EncryptedInt ExpenseId, int modifiedByUserId)
-    {
-        var response = new OperationResponse<EncryptedInt>();
-        var dbContext = (DbContext)context;
+    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Accept(EncryptedInt request, int modifiedByUserId)
+        => Task.FromResult<ErrorOr<OperationResponse<EncryptedInt>>>(
+            Error.Validation("Expense.Accept.Disabled", "Expense approval is performed via report approval workflow."));
 
-        await using var tx = await dbContext.Database.BeginTransactionAsync();
-
-        try
-        {
-            int id = ExpenseId;
-            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == id);
-
-            if (expense == null)
-            {
-                return Error.NotFound("Expense.NotFound", "Expense not found");
-            }
-
-            if (expense.ExpenseStatus != "submitted")
-            {
-                return Error.Validation("Expense.Accept.NotAllowed", "Only submitted expenses can be accepted.");
-            }
-
-            expense.ExpenseStatus = "accepted";
-            expense.ModifiedByUserId = modifiedByUserId;
-            expense.Modified = DateTime.UtcNow;
-
-            var logExpense = new LogExpExpense
-            {
-                Iud = "U",
-                IuddateTime = DateTime.UtcNow,
-                IudbyUserId = modifiedByUserId,
-                ExpenseId = expense.ExpenseId,
-                OrganizationId = expense.OrganizationId,
-                UserId = expense.UserId,
-                ProjectId = expense.ProjectId,
-                CategoryId = expense.CategoryId,
-                Title = expense.Title,
-                Amount = expense.Amount,
-                Currency = expense.Currency,
-                AttachmentUrl = expense.AttachmentUrl,
-                Description = expense.Description,
-                ExpenseStatus = expense.ExpenseStatus,
-                CreatedByUserId = expense.CreatedByUserId,
-                ModifiedByUserId = expense.ModifiedByUserId,
-                Created = expense.Created,
-                Modified = expense.Modified
-            };
-
-            await context.LogExpExpenses.AddAsync(logExpense);
-            await context.SaveChangesAsync(default);
-
-            await tx.CommitAsync();
-
-            response.Id = expense.ExpenseId;
-            return response;
-        }
-        catch (Exception ex)
-        {
-            await tx.RollbackAsync();
-            return Error.Failure("Expense.Accept.Failed", ex.Message);
-        }
-    }
-
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Reject(RejectExpenseRequest request)
-    {
-        var response = new OperationResponse<EncryptedInt>();
-        var dbContext = (DbContext)context;
-
-        await using var tx = await dbContext.Database.BeginTransactionAsync();
-
-        try
-        {
-            int id = request.ExpenseId;
-            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == id);
-
-            if (expense == null)
-            {
-                return Error.NotFound("Expense.NotFound", "Expense not found");
-            }
-
-            if (expense.ExpenseStatus != "submitted")
-            {
-                return Error.Validation("Expense.Reject.NotAllowed", "Only submitted expenses can be rejected.");
-            }
-
-            expense.ExpenseStatus = "rejected";
-            expense.RejectionReason = request.RejectionReason;
-            expense.ModifiedByUserId = request.ModifiedByUserId;
-            expense.Modified = DateTime.UtcNow;
-
-            var logExpense = new LogExpExpense
-            {
-                Iud = "U",
-                IuddateTime = DateTime.UtcNow,
-                IudbyUserId = request.ModifiedByUserId,
-                ExpenseId = expense.ExpenseId,
-                OrganizationId = expense.OrganizationId,
-                UserId = expense.UserId,
-                ProjectId = expense.ProjectId,
-                CategoryId = expense.CategoryId,
-                Title = expense.Title,
-                Amount = expense.Amount,
-                Currency = expense.Currency,
-                AttachmentUrl = expense.AttachmentUrl,
-                Description = expense.Description,
-                ExpenseStatus = expense.ExpenseStatus,
-                RejectionReason = expense.RejectionReason,
-                CreatedByUserId = expense.CreatedByUserId,
-                ModifiedByUserId = expense.ModifiedByUserId,
-                Created = expense.Created,
-                Modified = expense.Modified
-            };
-
-            await context.LogExpExpenses.AddAsync(logExpense);
-            await context.SaveChangesAsync(default);
-
-            await tx.CommitAsync();
-
-            response.Id = expense.ExpenseId;
-            return response;
-        }
-        catch (Exception ex)
-        {
-            await tx.RollbackAsync();
-            return Error.Failure("Expense.Reject.Failed", ex.Message);
-        }
-    }
+    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Reject(RejectExpenseRequest request)
+        => Task.FromResult<ErrorOr<OperationResponse<EncryptedInt>>>(
+            Error.Validation("Expense.Reject.Disabled", "Expense rejection is performed via report approval workflow."));
 }

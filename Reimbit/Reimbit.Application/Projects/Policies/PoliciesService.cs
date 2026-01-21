@@ -13,9 +13,9 @@ public class PoliciesService(IPoliciesRepository repository) : IPoliciesService
         return await repository.Insert(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt projectId)
+    public async Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt categoryId)
     {
-        return await repository.List(projectId);
+        return await repository.List(categoryId);
     }
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdatePolicyRequest request)

@@ -18,6 +18,16 @@ builder.Services.AddAegisInt(options =>
     options.MinLength = section.GetValue<int>("MinLength");
 });
 
+// CORS (allow requests from any origin)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAny", policy =>
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 // Add services to the container.
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
@@ -64,7 +74,9 @@ app.MapOpenApi();
 
 app.UseHttpsRedirection();
 
-// Authentication before Authorization
+// Apply CORS
+app.UseCors("AllowAny");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

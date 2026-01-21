@@ -13,85 +13,110 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
 {
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseCategoriesRequest request)
     {
-        var entity = new ExpCategory
+        try
         {
-            OrganizationId = request.OrganizationId,
-            ProjectId = request.ProjectId,
-            CategoryName = request.CategoryName,
-            Description = request.Description,
-            CreatedByUserId = request.CreatedByUserId,
-            ModifiedByUserId = request.ModifiedByUserId,
-            Created = request.Created,
-            Modified = request.Modified
-        };
+            var entity = new ExpCategory
+            {
+                OrganizationId = request.OrganizationId,
+                CategoryName = request.CategoryName,
+                Description = request.Description,
+                IsActive = true,
+                CreatedByUserId = request.CreatedByUserId,
+                ModifiedByUserId = request.ModifiedByUserId,
+                Created = request.Created,
+                Modified = request.Modified
+            };
 
-        context.ExpCategories.Add(entity);
-        var rowAffected = await context.SaveChangesAsync();
+            context.ExpCategories.Add(entity);
 
-        return new OperationResponse<EncryptedInt>
+            var rowsAffected = await context.SaveChangesAsync(default);
+
+            return new OperationResponse<EncryptedInt>
+            {
+                Id = entity.CategoryId,
+                RowsAffected = rowsAffected
+            };
+        }
+        catch (Exception ex)
         {
-            Id = entity.CategoryId,
-            RowsAffected = rowAffected
-        };
+            return Error.Failure("ExpenseCategory.Insert.Failed", ex.Message);
+        }
     }
 
     public async Task<ErrorOr<PagedResult<ListExpenseCategoriesResponse>>> List(int userId)
     {
-        var query = context.ExpCategories
-            .Include(x => x.Project)
+        var list = await context.ExpCategories
+            .AsNoTracking()
             .Select(x => new ListExpenseCategoriesResponse
             {
                 CategoryId = x.CategoryId,
-                ProjectId = x.ProjectId,
                 CategoryName = x.CategoryName,
-                Description = x.Description                
-            });
+                Description = x.Description
+            })
+            .ToListAsync();
 
-        var list = await query.ToListAsync();
-        
         return new PagedResult<ListExpenseCategoriesResponse>
         {
             Data = list,
-            Total= list.Count
+            Total = list.Count
         };
     }
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseCategoriesRequest request)
     {
-        var entity = await context.ExpCategories.FindAsync((int)request.CategoryId);
-        if (entity == null)
+        try
         {
-            return Error.NotFound("Category.NotFound", "Category not found");
+            var entity = await context.ExpCategories.FindAsync((int)request.CategoryId);
+            if (entity == null)
+            {
+                return Error.NotFound("Category.NotFound", "Category not found");
+            }
+
+            entity.CategoryName = request.CategoryName;
+            entity.Description = request.Description;
+            entity.ModifiedByUserId = request.ModifiedByUserId;
+            entity.Modified = request.Modified;
+
+            var rowsAffected = await context.SaveChangesAsync(default);
+
+            return new OperationResponse<EncryptedInt>
+            {
+                Id = entity.CategoryId,
+                RowsAffected = rowsAffected
+            };
         }
-
-        entity.CategoryName = request.CategoryName;
-        entity.Description = request.Description;
-        entity.ModifiedByUserId = request.ModifiedByUserId;
-        entity.Modified = request.Modified;
-
-        await context.SaveChangesAsync();
-
-        return new OperationResponse<EncryptedInt>
+        catch (Exception ex)
         {
-            Id = entity.CategoryId,
-        };
+            return Error.Failure("ExpenseCategory.Update.Failed", ex.Message);
+        }
     }
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt categoryId)
     {
-        var entity = await context.ExpCategories.FindAsync((int)categoryId);
-        if (entity == null)
+        try
         {
-            return Error.NotFound("Category.NotFound", "Category not found");
+            var entity = await context.ExpCategories.FindAsync((int)categoryId);
+            if (entity == null)
+            {
+                return Error.NotFound("Category.NotFound", "Category not found");
+            }
+
+            context.ExpCategories.Remove(entity);
+
+            var rowsAffected = await context.SaveChangesAsync(default);
+
+            await context.SaveChangesAsync(default);
+
+            return new OperationResponse<EncryptedInt>
+            {
+                Id = entity.CategoryId,
+                RowsAffected = rowsAffected
+            };
         }
-
-        context.ExpCategories.Remove(entity);
-        await context.SaveChangesAsync();
-
-        return new OperationResponse<EncryptedInt>
+        catch (Exception ex)
         {
-            Id = entity.CategoryId,
-        };
+            return Error.Failure("ExpenseCategory.Delete.Failed", ex.Message);
+        }
     }
 
     public async Task<ErrorOr<GetExpenseCategoriesResponse>> Get(EncryptedInt categoryId)
@@ -105,7 +130,6 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
         return new GetExpenseCategoriesResponse
         {
             CategoryId = entity.CategoryId,
-            ProjectId = entity.ProjectId,
             CategoryName = entity.CategoryName,
             Description = entity.Description
         };

@@ -13,26 +13,29 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
 {
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertPolicyRequest request)
     {
-        var response = new OperationResponse<EncryptedInt>();
-        var dbContext = (DbContext)context;
-
         try
         {
-            var policy = new ProjExpensePolicy
+            var policy = new ExpPolicy
             {
-                ProjectId = (int)request.ProjectId!,
                 CategoryId = request.CategoryId,
                 MaxAmount = request.MaxAmount,
                 IsReceiptMandatory = request.IsReceiptMandatory,
                 Description = request.Description,
-                Created = DateTime.UtcNow
+                CreatedByUserId = request.CreatedByUserId,
+                ModifiedByUserId = request.CreatedByUserId,
+                Created = request.Created,
+                Modified = request.Created
             };
 
-            await context.ProjExpensePolicies.AddAsync(policy);
-            await context.SaveChangesAsync(default);
+            await context.ExpPolicies.AddAsync(policy);
 
-            response.Id = policy.PolicyId;
-            return response;
+            var rowsAffected = await context.SaveChangesAsync(default);
+
+            return new OperationResponse<EncryptedInt>
+            {
+                Id = policy.PolicyId,
+                RowsAffected = rowsAffected
+            };
         }
         catch (Exception ex)
         {
@@ -40,27 +43,23 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt projectId)
+    public async Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt categoryId)
     {
-        int id = projectId;
-        var query = context.ProjExpensePolicies
-            .Include(x => x.Project)
+        var data = await context.ExpPolicies
+            .AsNoTracking()
+            .Where(x => x.CategoryId == categoryId)
             .Include(x => x.Category)
-            .Where(x => x.ProjectId == id)
             .Select(x => new ListPoliciesResponse
             {
                 PolicyId = x.PolicyId,
-                ProjectId = x.ProjectId,
-                ProjectName = x.Project.ProjectName,
                 CategoryId = x.CategoryId,
                 CategoryName = x.Category != null ? x.Category.CategoryName : null,
                 MaxAmount = x.MaxAmount,
                 IsReceiptMandatory = x.IsReceiptMandatory,
                 Description = x.Description,
                 Created = x.Created
-            });
-
-        var data = await query.ToListAsync();
+            })
+            .ToListAsync();
 
         return new PagedResult<ListPoliciesResponse>
         {
@@ -71,28 +70,29 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdatePolicyRequest request)
     {
-        var response = new OperationResponse<EncryptedInt>();
-        
         try
         {
-            int id = request.PolicyId;
-            var policy = await context.ProjExpensePolicies.FirstOrDefaultAsync(x => x.PolicyId == id);
+            var policy = await context.ExpPolicies.FirstOrDefaultAsync(x => x.PolicyId == request.CategoryId);
 
             if (policy == null)
             {
                 return Error.NotFound("Policy.NotFound", "Policy not found");
             }
 
-            policy.ProjectId = request.ProjectId;
             policy.CategoryId = request.CategoryId;
             policy.MaxAmount = request.MaxAmount;
             policy.IsReceiptMandatory = request.IsReceiptMandatory;
             policy.Description = request.Description;
+            policy.ModifiedByUserId = request.ModifiedByUserId;
+            policy.Modified = request.Modified;
 
-            await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync(default);
 
-            response.Id = policy.PolicyId;
-            return response;
+            return new OperationResponse<EncryptedInt>
+            {
+                Id = policy.PolicyId,
+                RowsAffected = rowsAffected
+            };
         }
         catch (Exception ex)
         {
@@ -102,23 +102,26 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt policyId)
     {
-        var response = new OperationResponse<EncryptedInt>();
-        
         try
         {
-            int id = policyId;
-            var policy = await context.ProjExpensePolicies.FirstOrDefaultAsync(x => x.PolicyId == id);
+            var policy = await context.ExpPolicies.FirstOrDefaultAsync(x => x.PolicyId == policyId);
 
             if (policy == null)
             {
                 return Error.NotFound("Policy.NotFound", "Policy not found");
             }
 
-            context.ProjExpensePolicies.Remove(policy);
+            context.ExpPolicies.Remove(policy);
+
+            var rowsAffected = await context.SaveChangesAsync(default);
+
             await context.SaveChangesAsync(default);
 
-            response.Id = policy.PolicyId;
-            return response;
+            return new OperationResponse<EncryptedInt>
+            {
+                Id = policy.PolicyId,
+                RowsAffected = rowsAffected
+            };
         }
         catch (Exception ex)
         {
@@ -128,13 +131,15 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
 
     public async Task<ErrorOr<GetPolicyResponse>> Get(EncryptedInt policyId)
     {
-        int id = policyId;
-        var policy = await context.ProjExpensePolicies
+        var id = (int)policyId;
+
+        var policy = await context.ExpPolicies
+            .AsNoTracking()
             .Where(x => x.PolicyId == id)
             .Select(x => new GetPolicyResponse
             {
                 PolicyId = x.PolicyId,
-                ProjectId = x.ProjectId,
+                ProjectId = 0,
                 CategoryId = x.CategoryId,
                 MaxAmount = x.MaxAmount,
                 IsReceiptMandatory = x.IsReceiptMandatory,

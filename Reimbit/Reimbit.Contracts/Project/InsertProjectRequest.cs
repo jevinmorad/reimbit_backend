@@ -16,11 +16,7 @@ public class InsertProjectRequest
     [JsonIgnore]
     public int CreatedByUserId { get; set; }
     [JsonIgnore]
-    public int ModifiedByUserId { get; set; }
-    [JsonIgnore]
     public DateTime Created { get; set; }
-    [JsonIgnore]
-    public DateTime Modified { get; set; }
     [JsonIgnore]
     public bool IsActive { get; set; }
 }

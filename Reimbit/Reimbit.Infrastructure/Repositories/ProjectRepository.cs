@@ -14,9 +14,6 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt projectId)
     {
         var response = new OperationResponse<EncryptedInt>();
-        var dbContext = (DbContext)context;
-
-        await using var tx = await dbContext.Database.BeginTransactionAsync();
 
         try
         {
@@ -28,32 +25,10 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
                 return Error.NotFound("Project.NotFound", "Project not found");
             }
 
-            // Soft Delete
             project.IsActive = false;
             project.Modified = DateTime.UtcNow;
             
-            var logProject = new LogProjProject
-            {
-                Iud = "D",
-                IuddateTime = DateTime.UtcNow,
-                IudbyUserId = 0,
-                ProjectId = project.ProjectId,
-                ProjectName = project.ProjectName,
-                OrganizationId = project.OrganizationId,
-                ProjectLogoUrl = project.ProjectLogoUrl,
-                ProjectDetails = project.ProjectDetails,
-                ProjectDescription = project.ProjectDescription,
-                ManagerId = project.ManagerId,
-                Created = project.Created,
-                CreatedByUserId = project.CreatedByUserId,
-                ModifiedByUserId = project.ModifiedByUserId,
-                IsActive = false
-            };
-
-            await context.LogProjProjects.AddAsync(logProject);
             await context.SaveChangesAsync(default);
-
-            await tx.CommitAsync();
 
             response.Id = project.ProjectId;
 
@@ -61,7 +36,6 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync();
             return Error.Failure("Project.Delete.Failed", ex.Message);
         }
     }
@@ -95,10 +69,6 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
     {
         var response = new OperationResponse<EncryptedInt>();
 
-        var dbContext = (DbContext)context;
-
-        await using var tx = await dbContext.Database.BeginTransactionAsync();
-
         try
         {
             var project = new ProjProject
@@ -111,35 +81,11 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
                 ManagerId = request.ManagerId,
                 Created = request.Created,
                 CreatedByUserId = request.CreatedByUserId,
-                ModifiedByUserId = request.ModifiedByUserId,
                 IsActive = request.IsActive
             };
 
             await context.ProjProjects.AddAsync(project);
             await context.SaveChangesAsync(default);
-
-            var logProject = new LogProjProject
-            {
-                Iud = "I",
-                IuddateTime = request.Created,
-                IudbyUserId = request.CreatedByUserId,
-                ProjectName = request.ProjectName,
-                OrganizationId = request.OrganizationId,
-                ProjectLogoUrl = request.ProjectLogoUrl,
-                ProjectDetails = request.ProjectDetails,
-                ProjectDescription = request.ProjectDescription,
-                ManagerId = request.ManagerId,
-                Created = request.Created,
-                CreatedByUserId = request.CreatedByUserId,
-                ModifiedByUserId = request.CreatedByUserId,
-                IsActive = request.IsActive
-            };
-
-            await context.LogProjProjects.AddAsync(logProject);
-
-            await context.SaveChangesAsync(default);
-
-            await tx.CommitAsync();
 
             response.Id = project.ProjectId;
 
@@ -147,7 +93,6 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync();
             return Error.Failure("Project.Insert.Failed", ex.Message);
         }
     }
@@ -185,9 +130,6 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateProjectRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
-        var dbContext = (DbContext)context;
-
-        await using var tx = await dbContext.Database.BeginTransactionAsync();
 
         try
         {
@@ -208,36 +150,12 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
             project.ModifiedByUserId = request.ModifiedByUserId;
             project.IsActive = request.IsActive;
 
-            var logProject = new LogProjProject
-            {
-                Iud = "U",
-                IuddateTime = request.Modified,
-                IudbyUserId = request.ModifiedByUserId,
-                ProjectId = project.ProjectId,
-                ProjectName = project.ProjectName,
-                OrganizationId = project.OrganizationId,
-                ProjectLogoUrl = project.ProjectLogoUrl,
-                ProjectDetails = project.ProjectDetails,
-                ProjectDescription = project.ProjectDescription,
-                ManagerId = project.ManagerId,
-                Created = project.Created,
-                CreatedByUserId = project.CreatedByUserId,
-                ModifiedByUserId = project.ModifiedByUserId,
-                IsActive = project.IsActive
-            };
-
-            await context.LogProjProjects.AddAsync(logProject);
-            await context.SaveChangesAsync(default);
-
-            await tx.CommitAsync();
-
             response.Id = project.ProjectId;
 
             return response;
         }
         catch (Exception ex)
         {
-            await tx.RollbackAsync();
             return Error.Failure("Project.Update.Failed", ex.Message);
         }
     }
@@ -245,13 +163,12 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
     public async Task<ErrorOr<ViewProjectResponse>> View(EncryptedInt projectId)
     {
         int id = projectId;
-        
+
         var project = await context.ProjProjects
             .Include(x => x.Manager)
             .Include(x => x.CreatedByUser)
-            .Include(x => x.ProjProjectMembers).ThenInclude(m => m.User)
             .Include(x => x.ExpExpenses)
-            .Include(x => x.ExpReports)
+            .Include(x => x.ExpExpenseReports)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.ProjectId == id);
 
@@ -269,10 +186,10 @@ public class ProjectRepository(IApplicationDbContext context) : IProjectReposito
             Created = project.Created,
             Modified = project.Modified,
             TotalExpense = project.ExpExpenses.Sum(e => e.Amount),
-            AcceptedAmount = project.ExpReports.Sum(r => r.AcceptedAmount),
-            RejectedAmount = project.ExpReports.Sum(r => r.RejectedAmount),
-            PendingToViewAmount = project.ExpExpenses.Where(e => e.ExpenseStatus == "submitted").Sum(e => e.Amount),
-            Employees = project.ProjProjectMembers.Select(m => $"{m.User.FirstName} {m.User.LastName}").ToList()
+            AcceptedAmount = 0,
+            RejectedAmount = 0,
+            PendingToViewAmount = 0,
+            Employees = new List<string>()
         };
 
         return response;

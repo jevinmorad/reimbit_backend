@@ -1,4 +1,4 @@
-﻿using Reimbit.Contracts.Security.Account;
+﻿using Reimbit.Contracts.Account;
 using System.Security.Claims;
 
 namespace Reimbit.Application.Jwt;

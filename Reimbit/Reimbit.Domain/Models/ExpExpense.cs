@@ -6,9 +6,9 @@ public partial class ExpExpense
 
     public int OrganizationId { get; set; }
 
-    public int UserId { get; set; }
+    public int EmployeeId { get; set; }
 
-    public int ProjectId { get; set; }
+    public int? ProjectId { get; set; }
 
     public int CategoryId { get; set; }
 
@@ -18,17 +18,13 @@ public partial class ExpExpense
 
     public string Currency { get; set; } = null!;
 
-    public string AttachmentUrl { get; set; } = null!;
+    public string ReceiptUrl { get; set; } = null!;
 
     public string? Description { get; set; }
 
-    public string ExpenseStatus { get; set; } = null!;
-
-    public string? RejectionReason { get; set; }
+    public byte Status { get; set; }
 
     public int CreatedByUserId { get; set; }
-
-    public int ModifiedByUserId { get; set; }
 
     public DateTime Created { get; set; }
 
@@ -36,15 +32,15 @@ public partial class ExpExpense
 
     public virtual ExpCategory Category { get; set; } = null!;
 
-    public virtual ICollection<ComExpenseQuery> ComExpenseQueries { get; set; } = new List<ComExpenseQuery>();
-
     public virtual SecUser CreatedByUser { get; set; } = null!;
 
-    public virtual SecUser ModifiedByUser { get; set; } = null!;
+    public virtual SecUser Employee { get; set; } = null!;
+
+    public virtual ICollection<ExpExpenseRejection> ExpExpenseRejections { get; set; } = new List<ExpExpenseRejection>();
+
+    public virtual ICollection<ExpReportExpense> ExpReportExpenses { get; set; } = new List<ExpReportExpense>();
 
     public virtual OrgOrganization Organization { get; set; } = null!;
 
-    public virtual ProjProject Project { get; set; } = null!;
-
-    public virtual SecUser User { get; set; } = null!;
+    public virtual ProjProject? Project { get; set; }
 }

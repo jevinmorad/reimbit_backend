@@ -9,4 +9,6 @@ public interface IEmployeeService
 {
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request);
     Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List();
+    Task<ErrorOr<ViewEmployeeResponse>> View(EncryptedInt userId);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> AssignEmployeesToManager(AssignEmployeesToManagerRequest request);
 }

@@ -1,7 +1,7 @@
 ﻿using Common.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Reimbit.Application.Permissions;
 using Reimbit.Web.Security;
 
 namespace Reimbit.Web;
@@ -12,7 +12,8 @@ public static class WebConfiguration
     {
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
-        services.AddScoped<IPermissionResolver, PermissionResolver>();
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         return services;
     }

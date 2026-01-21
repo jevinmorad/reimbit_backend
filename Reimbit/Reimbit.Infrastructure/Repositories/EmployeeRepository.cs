@@ -10,7 +10,7 @@ using Reimbit.Domain.Repositories;
 namespace Reimbit.Infrastructure.Repositories;
 
 public class EmployeeRepository(
-    IApplicationDbContext context    
+    IApplicationDbContext context
 ) : IEmployeeRepository
 {
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request)
@@ -23,64 +23,59 @@ public class EmployeeRepository(
         {
             var user = new SecUser
             {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
+                OrganizationId = request.OrganizationId,
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName.Trim(),
+                DisplayName = request.DisplayName.Trim(),
                 Email = request.Email,
                 MobileNo = request.MobileNo,
-                UserName = request.Email,
+                ProfileImageUrl = request.ProfileImageUrl,
                 IsActive = request.IsActive,
                 Created = request.Created,
-                Modified = request.Modified,
-                CreatedByUserId = request.CreatedByUserId,
-                ModifiedByUserId = request.ModifiedByUserId
+                CreatedByUserId = request.CreatedByUserId
             };
 
-            var us = context.SecUsers.Add(user);
+            context.SecUsers.Add(user);
+            await context.SaveChangesAsync(default);
 
             var userRole = new SecUserRole
             {
-                UserRoleId = request.RoleId,
                 UserId = user.UserId,
+                RoleId = (int)request.RoleId,
+                CreatedByUserId = request.CreatedByUserId,
                 Created = request.Created,
-                Modified = request.Modified
             };
 
             context.SecUserRoles.Add(userRole);
 
-            var logUser = new LogSecUser
+            if (request.ManagerId != null)
             {
-                Iud = "I",
-                IuddateTime = request.Created,
-                IudbyUserId = request.CreatedByUserId,
-                UserId = user.UserId,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email,
-                UserName = user.UserName,
-                MobileNo = user.MobileNo,
-                UserProfileImageUrl = user.UserProfileImageUrl,
-                CreatedByUserId = user.CreatedByUserId,
-                ModifiedByUserId = user.ModifiedByUserId,
-                Created = user.Created,
-                Modified = user.Modified
-            };
+                var managerId = (int)request.ManagerId.Value;
 
-            context.LogSecUsers.Add(logUser);
+                var managerExists = await context.SecUsers
+                    .AsNoTracking()
+                    .AnyAsync(x => x.UserId == managerId && x.OrganizationId == request.OrganizationId);
 
-            var logUserRole = new LogSecUserRole
-            {
-                Iud = "I",
-                IuddateTime = request.Created,
-                IudbyUserId = request.CreatedByUserId,
-                UserId = user.UserId,
-                UserRoleId = userRole.UserRoleId,
-                Created = userRole.Created,
-                Modified = userRole.Modified,
-                CreatedByUserId = userRole.CreatedByUserId,
-                ModifiedByUserId = userRole.ModifiedByUserId
-            };
+                if (!managerExists)
+                {
+                    return Error.Validation("Manager.NotFound", "Manager not found in organization.");
+                }
 
-            context.LogSecUserRoles.Add(logUserRole);
+                var now = DateTime.UtcNow;
+                var validFrom = request.ManagerValidFrom ?? now;
+
+                var mapping = new SecUserManager
+                {
+                    UserId = user.UserId,
+                    ManagerId = managerId,
+                    ManagerType = request.ManagerType ?? (byte)1,
+                    IsPrimary = request.IsPrimaryManager,
+                    ValidFrom = validFrom,
+                    ValidTo = request.ManagerValidTo
+                };
+
+                context.SecUserManagers.Add(mapping);
+            }
 
             var rowsAffected = await context.SaveChangesAsync(default);
             await tx.CommitAsync();
@@ -99,31 +94,143 @@ public class EmployeeRepository(
         }
     }
 
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> AssignEmployeesToManager(AssignEmployeesToManagerRequest request)
+    {
+        var dbContext = (DbContext)context;
+        await using var tx = await dbContext.Database.BeginTransactionAsync();
+
+        try
+        {
+            if (request.EmployeeIds.Count == 0)
+            {
+                return Error.Validation("EmployeeIds.Required", "EmployeeIds is required.");
+            }
+
+            var managerId = (int)request.ManagerId;
+            var employeeIds = request.EmployeeIds.Select(x => (int)x).Distinct().ToList();
+
+            if (employeeIds.Contains(managerId))
+            {
+                return Error.Validation("ManagerMapping.Invalid", "Manager cannot be assigned as their own employee.");
+            }
+
+            var managerExists = await context.SecUsers
+                .AsNoTracking()
+                .AnyAsync(x => x.UserId == managerId && x.OrganizationId == request.OrganizationId);
+
+            if (!managerExists)
+            {
+                return Error.NotFound("Manager.NotFound", "Manager not found.");
+            }
+
+            var employeesInOrg = await context.SecUsers
+                .AsNoTracking()
+                .Where(x => x.OrganizationId == request.OrganizationId && employeeIds.Contains(x.UserId))
+                .Select(x => x.UserId)
+                .ToListAsync();
+
+            if (employeesInOrg.Count != employeeIds.Count)
+            {
+                return Error.Validation("Employees.NotFound", "One or more employees were not found in organization.");
+            }
+
+            var now = DateTime.UtcNow;
+            var validFrom = request.ValidFrom ?? now;
+
+            foreach (var employeeId in employeeIds)
+            {
+                var activeMappings = await context.SecUserManagers
+                    .Where(m =>
+                        m.UserId == employeeId &&
+                        m.ManagerType == request.ManagerType &&
+                        (m.ValidTo == null || m.ValidTo > now))
+                    .ToListAsync();
+
+                foreach (var existing in activeMappings)
+                {
+                    existing.ValidTo = now;
+                }
+
+                var mapping = new SecUserManager
+                {
+                    UserId = employeeId,
+                    ManagerId = managerId,
+                    ManagerType = request.ManagerType,
+                    IsPrimary = request.IsPrimary,
+                    ValidFrom = validFrom,
+                    ValidTo = request.ValidTo
+                };
+
+                context.SecUserManagers.Add(mapping);
+            }
+
+            var rowsAffected = await context.SaveChangesAsync(default);
+            await tx.CommitAsync();
+
+            return new OperationResponse<EncryptedInt>
+            {
+                Id = managerId,
+                RowsAffected = rowsAffected
+            };
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            return Error.Failure("UserManager.Assign.Failed", ex.Message);
+        }
+    }
+
     public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List(int organizationId)
     {
-        var query = context.SecUsers
-            .Where(u => u.SecUserAuth!.OrganizationId == organizationId)
+        var data = context.SecUsers
+            .AsNoTracking()
+            .Include(u => u.SecUserRoleUsers)
+            .Where(u => u.OrganizationId == organizationId)
             .Select(u => new ListEmployeeResponse
             {
                 UserId = u.UserId,
-                DisplayName = u.FirstName + " " + u.LastName,
+                DisplayName = u.DisplayName,
                 Email = u.Email,
-                MobileNo = u.MobileNo ?? "",
+                MobileNo = u.MobileNo ?? string.Empty,
                 Role = u.SecUserRoleUsers
                     .Join(context.SecRoles,
-                        ur => ur.UserRoleId,
+                        ur => ur.RoleId,
                         r => r.RoleId,
                         (ur, r) => r.RoleName)
                     .FirstOrDefault() ?? string.Empty,
                 IsActive = u.IsActive
-            });
+            }).ToList();
 
-        var data = await query.ToListAsync();
-        
+
         return new PagedResult<ListEmployeeResponse>
         {
             Total = data.Count,
             Data = data
         };
+    }
+
+    public async Task<ErrorOr<ViewEmployeeResponse>> View(EncryptedInt userId)
+    {
+        var data = await context.SecUsers
+            .AsNoTracking()
+            .Where(u => u.UserId == (int)userId)
+            .Select(u => new ViewEmployeeResponse
+            {
+                Name = u.DisplayName,
+                Role = u.SecUserRoleUsers
+                    .Join(context.SecRoles,
+                        ur => ur.RoleId,
+                        r => r.RoleId,
+                        (ur, r) => r.RoleName)
+                    .FirstOrDefault(),
+                TotalExpense = u.ExpExpenseEmployees.Sum(e => e.Amount),
+                Created = u.Created,
+                CreatedByUserName = u.CreatedByUser != null ? u.CreatedByUser.DisplayName : null,
+                Modified = u.Modified,
+                ModifiededByUserName = u.ModifiedByUser != null ? u.ModifiedByUser.DisplayName : null
+            })
+            .FirstOrDefaultAsync();
+
+        return data;
     }
 }

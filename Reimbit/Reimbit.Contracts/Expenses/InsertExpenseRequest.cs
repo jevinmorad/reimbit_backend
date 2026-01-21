@@ -5,14 +5,14 @@ namespace Reimbit.Contracts.Expenses;
 
 public class InsertExpenseRequest
 {
-    public required EncryptedInt ProjectId { get; set; }
     public required EncryptedInt CategoryId { get; set; }
     public required string Title { get; set; }
-    public required decimal Amount { get; set; }
+    public required decimal Amount { get; set; } = 0;
+    public EncryptedInt? ProjectId { get; set; } = null;
     public string? Currency { get; set; } = "INR";
-    public string? AttachmentUrl { get; set; } = null;
-    public string ExpenseStatus { get; set; } = "submitted";
+    public string? ReceiptUrl { get; set; } = null;
     public string? Description { get; set; } = null;
+
     [JsonIgnore]
     public int OrganizationId { get; set; }
     [JsonIgnore]

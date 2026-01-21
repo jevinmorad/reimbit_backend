@@ -15,23 +15,22 @@ public class EmployeeService(
 {
     private readonly CurrentUser<TokenData> currentUser = currentUserProvider.GetCurrentUser<TokenData>();
 
+    public Task<ErrorOr<OperationResponse<EncryptedInt>>> AssignEmployeesToManager(AssignEmployeesToManagerRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
-        request.ModifiedByUserId = currentUser.UserId;
-        request.Created = DateTime.Now;
-        request.Modified = DateTime.Now;
-        request.IsActive = true;
+        request.Created = DateTime.UtcNow;
 
         var result = await repository.Insert(request);
         return result;
     }
 
-    public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List()
-    {
-        int OrganizationId = currentUser.OrganizationId;
-        var result = await repository.List(OrganizationId);
-        return result;
-    }
+    public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List() => await repository.List(currentUser.OrganizationId);
+
+    public async Task<ErrorOr<ViewEmployeeResponse>> View(EncryptedInt userId) => await repository.View(userId);
 }

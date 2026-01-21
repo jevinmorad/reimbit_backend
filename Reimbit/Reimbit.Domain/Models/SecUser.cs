@@ -4,17 +4,19 @@ public partial class SecUser
 {
     public int UserId { get; set; }
 
+    public int OrganizationId { get; set; }
+
     public string FirstName { get; set; } = null!;
 
     public string LastName { get; set; } = null!;
 
     public string Email { get; set; } = null!;
 
-    public string UserName { get; set; } = null!;
+    public string DisplayName { get; set; } = null!;
 
     public string? MobileNo { get; set; }
 
-    public string? UserProfileImageUrl { get; set; }
+    public string? ProfileImageUrl { get; set; }
 
     public bool IsActive { get; set; }
 
@@ -24,11 +26,11 @@ public partial class SecUser
 
     public DateTime Created { get; set; }
 
-    public DateTime Modified { get; set; }
+    public DateTime? Modified { get; set; }
 
-    public virtual ICollection<ComExpenseQuery> ComExpenseQueries { get; set; } = new List<ComExpenseQuery>();
+    public virtual ICollection<AprApprovalInstance> AprApprovalInstances { get; set; } = new List<AprApprovalInstance>();
 
-    public virtual SecUser? CreatedByUser { get; set; } = null!;
+    public virtual SecUser? CreatedByUser { get; set; }
 
     public virtual ICollection<ExpCategory> ExpCategoryCreatedByUsers { get; set; } = new List<ExpCategory>();
 
@@ -36,43 +38,49 @@ public partial class SecUser
 
     public virtual ICollection<ExpExpense> ExpExpenseCreatedByUsers { get; set; } = new List<ExpExpense>();
 
-    public virtual ICollection<ExpExpense> ExpExpenseModifiedByUsers { get; set; } = new List<ExpExpense>();
+    public virtual ICollection<ExpExpense> ExpExpenseEmployees { get; set; } = new List<ExpExpense>();
 
-    public virtual ICollection<ExpExpense> ExpExpenseUsers { get; set; } = new List<ExpExpense>();
+    public virtual ICollection<ExpExpenseRejection> ExpExpenseRejections { get; set; } = new List<ExpExpenseRejection>();
 
-    public virtual ICollection<ExpReport> ExpReportCreatedByUsers { get; set; } = new List<ExpReport>();
+    public virtual ICollection<ExpExpenseReport> ExpExpenseReportCreatedByUsers { get; set; } = new List<ExpExpenseReport>();
 
-    public virtual ICollection<ExpReport> ExpReportManagers { get; set; } = new List<ExpReport>();
+    public virtual ICollection<ExpExpenseReport> ExpExpenseReportModifiedByUsers { get; set; } = new List<ExpExpenseReport>();
 
-    public virtual ICollection<ExpReport> ExpReportModifiedByUsers { get; set; } = new List<ExpReport>();
+    public virtual ICollection<ExpPolicy> ExpPolicyCreatedByUsers { get; set; } = new List<ExpPolicy>();
+
+    public virtual ICollection<ExpPolicy> ExpPolicyModifiedByUsers { get; set; } = new List<ExpPolicy>();
+
+    public virtual ICollection<ExpReportRejection> ExpReportRejections { get; set; } = new List<ExpReportRejection>();
 
     public virtual ICollection<SecUser> InverseCreatedByUser { get; set; } = new List<SecUser>();
 
     public virtual ICollection<SecUser> InverseModifiedByUser { get; set; } = new List<SecUser>();
 
-    public virtual SecUser? ModifiedByUser { get; set; } = null!;
+    public virtual SecUser? ModifiedByUser { get; set; }
 
-    public virtual ICollection<OrgOrganization> OrgOrganizationCreatedByUsers { get; set; } = new List<OrgOrganization>();
-
-    public virtual ICollection<OrgOrganization> OrgOrganizationModifiedByUsers { get; set; } = new List<OrgOrganization>();
+    public virtual OrgOrganization? Organization { get; set; }
 
     public virtual ICollection<ProjProject> ProjProjectCreatedByUsers { get; set; } = new List<ProjProject>();
 
     public virtual ICollection<ProjProject> ProjProjectManagers { get; set; } = new List<ProjProject>();
 
-    public virtual ICollection<ProjProjectMember> ProjProjectMembers { get; set; } = new List<ProjProjectMember>();
-
     public virtual ICollection<ProjProject> ProjProjectModifiedByUsers { get; set; } = new List<ProjProject>();
 
-    public virtual ICollection<SecRoleClaim> SecRoleClaimCreatedByUsers { get; set; } = new List<SecRoleClaim>();
+    public virtual ICollection<SecDelegateApprover> SecDelegateApproverDelegateUsers { get; set; } = new List<SecDelegateApprover>();
 
-    public virtual ICollection<SecRoleClaim> SecRoleClaimModifiedByUsers { get; set; } = new List<SecRoleClaim>();
+    public virtual ICollection<SecDelegateApprover> SecDelegateApproverUsers { get; set; } = new List<SecDelegateApprover>();
+
+    public virtual ICollection<SecRoleClaim> SecRoleClaims { get; set; } = new List<SecRoleClaim>();
 
     public virtual ICollection<SecRole> SecRoleCreatedByUsers { get; set; } = new List<SecRole>();
 
     public virtual ICollection<SecRole> SecRoleModifiedByUsers { get; set; } = new List<SecRole>();
 
     public virtual SecUserAuth? SecUserAuth { get; set; }
+
+    public virtual ICollection<SecUserManager> SecUserManagerManagers { get; set; } = new List<SecUserManager>();
+
+    public virtual ICollection<SecUserManager> SecUserManagerUsers { get; set; } = new List<SecUserManager>();
 
     public virtual ICollection<SecUserRole> SecUserRoleCreatedByUsers { get; set; } = new List<SecUserRole>();
 

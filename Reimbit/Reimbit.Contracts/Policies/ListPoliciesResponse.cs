@@ -5,8 +5,6 @@ namespace Reimbit.Contracts.Policies;
 public class ListPoliciesResponse
 {
     public EncryptedInt PolicyId { get; set; }
-    public EncryptedInt ProjectId { get; set; }
-    public string ProjectName { get; set; }
     public EncryptedInt? CategoryId { get; set; }
     public string? CategoryName { get; set; }
     public decimal? MaxAmount { get; set; }

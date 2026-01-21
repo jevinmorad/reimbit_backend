@@ -16,31 +16,27 @@ public partial class ProjProject
 
     public int ManagerId { get; set; }
 
+    public bool IsArchived { get; set; }
+
     public int CreatedByUserId { get; set; }
 
-    public int ModifiedByUserId { get; set; }
+    public int? ModifiedByUserId { get; set; }
 
     public DateTime Created { get; set; }
 
-    public DateTime Modified { get; set; }
+    public DateTime? Modified { get; set; }
 
     public bool IsActive { get; set; }
 
     public virtual SecUser CreatedByUser { get; set; } = null!;
 
-    public virtual ICollection<ExpCategory> ExpCategories { get; set; } = new List<ExpCategory>();
+    public virtual ICollection<ExpExpenseReport> ExpExpenseReports { get; set; } = new List<ExpExpenseReport>();
 
     public virtual ICollection<ExpExpense> ExpExpenses { get; set; } = new List<ExpExpense>();
-
-    public virtual ICollection<ExpReport> ExpReports { get; set; } = new List<ExpReport>();
 
     public virtual SecUser Manager { get; set; } = null!;
 
     public virtual SecUser ModifiedByUser { get; set; } = null!;
 
     public virtual OrgOrganization Organization { get; set; } = null!;
-
-    public virtual ICollection<ProjExpensePolicy> ProjExpensePolicies { get; set; } = new List<ProjExpensePolicy>();
-
-    public virtual ICollection<ProjProjectMember> ProjProjectMembers { get; set; } = new List<ProjProjectMember>();
 }

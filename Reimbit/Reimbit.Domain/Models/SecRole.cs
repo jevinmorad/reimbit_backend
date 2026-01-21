@@ -10,15 +10,19 @@ public partial class SecRole
 
     public string? Description { get; set; }
 
+    public DateTime ValidFrom { get; set; }
+
+    public DateTime? ValidTo { get; set; }
+
     public int CreatedByUserId { get; set; }
 
-    public int ModifiedByUserId { get; set; }
+    public int? ModifiedByUserId { get; set; }
 
     public DateTime Created { get; set; }
 
-    public DateTime Modified { get; set; }
+    public DateTime? Modified { get; set; }
 
-    public bool? IsActive { get; set; }
+    public bool IsActive { get; set; }
 
     public virtual SecUser CreatedByUser { get; set; } = null!;
 
@@ -27,4 +31,6 @@ public partial class SecRole
     public virtual OrgOrganization? Organization { get; set; }
 
     public virtual ICollection<SecRoleClaim> SecRoleClaims { get; set; } = new List<SecRoleClaim>();
+
+    public virtual ICollection<SecUserRole> SecUserRoles { get; set; } = new List<SecUserRole>();
 }

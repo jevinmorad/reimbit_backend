@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Reimbit.Contracts.Security.Account;
+using Reimbit.Contracts.Account;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -18,10 +18,10 @@ public class JwtTokenService : IJwtTokenService
     {
         var claims = new List<Claim>
         {
-            new("userId", user.UserId.ToString() ?? string.Empty),
-            new(ClaimTypes.Email, user.Email ?? string.Empty),
-            new("organizationId", user.OrganizationId.ToString()),
-            new("roleId", user.RoleId?.ToString() ?? string.Empty)
+            new("userId", ((int)user.UserId).ToString() ?? string.Empty),
+            new("email", user.Email ?? string.Empty),
+            new("organizationId", ((int)user.OrganizationId).ToString()),
+            new("roleId", ((int)(user.RoleId??0)).ToString() ?? string.Empty)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));

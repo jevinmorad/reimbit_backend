@@ -72,8 +72,4 @@
     <ProjectReference Include="..\Reimbit.Contracts\Reimbit.Contracts.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
 </Project>

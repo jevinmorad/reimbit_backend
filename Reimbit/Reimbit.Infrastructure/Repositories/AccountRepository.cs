@@ -1,9 +1,12 @@
-﻿using Azure.Core;
+﻿using AegisInt.Core;
+using Common.Data.Models;
 using ErrorOr;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Reimbit.Application.Audit;
 using Reimbit.Application.Jwt;
-using Reimbit.Contracts.Security.Account;
+using Reimbit.Contracts.Account;
+using Reimbit.Core.Common.Permissions;
 using Reimbit.Domain.Interfaces;
 using Reimbit.Domain.Models;
 using Reimbit.Domain.Repositories;
@@ -13,7 +16,8 @@ namespace Reimbit.Infrastructure.Repositories;
 public class AccountRepository(
     IApplicationDbContext context,
     IPasswordHasher<SecUser> passwordHasher,
-    IJwtTokenService jwtTokenService
+    IJwtTokenService jwtTokenService,
+    IAuditLogger auditLogger
 ) : IAccountRepository
 {
     public async Task<ErrorOr<LoginResponse<LoginInfo>>> Login(LoginRequest request)
@@ -24,16 +28,35 @@ public class AccountRepository(
 
         if (user == null || user.SecUserAuth == null)
         {
+            await auditLogger.WriteAsync(
+                entityType: "SEC_UserAuth",
+                entityId: null,
+                action: "LOGIN_FAILED",
+                organizationId: null,
+                userId: null,
+                oldValue: null,
+                newValue: new { request.Email, Reason = "USER_NOT_FOUND" },
+                ipAddress: null,
+                userAgent: null);
+
             return Error.NotFound(description: "Invalid credentials");
         }
 
-        var isPassCorrect = passwordHasher.VerifyHashedPassword(
-            user,
-            user.SecUserAuth.PasswordHash,
-            request.Password);
+        var isPassCorrect = passwordHasher.VerifyHashedPassword(user, user.SecUserAuth.PasswordHash, request.Password);
 
         if (isPassCorrect == PasswordVerificationResult.Failed)
         {
+            await auditLogger.WriteAsync(
+                entityType: "SEC_UserAuth",
+                entityId: user.UserId,
+                action: "LOGIN_FAILED",
+                organizationId: user.OrganizationId,
+                userId: user.UserId,
+                oldValue: null,
+                newValue: new { user.UserId, user.Email, Reason = "INVALID_PASSWORD" },
+                ipAddress: null,
+                userAgent: null);
+
             return Error.Unauthorized(description: "Invalid credentials");
         }
 
@@ -43,7 +66,7 @@ public class AccountRepository(
         var loginInfo = new LoginInfo
         {
             UserId = user.UserId,
-            OrganizationId = user.SecUserAuth.OrganizationId,
+            OrganizationId = user.OrganizationId,
             Email = user.Email,
             RoleId = userRole?.UserRoleId
         };
@@ -53,174 +76,336 @@ public class AccountRepository(
 
         user.SecUserAuth.RefreshToken = refreshToken;
         user.SecUserAuth.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+        user.SecUserAuth.IsRevoked = false;
         user.SecUserAuth.LastLogin = DateTime.UtcNow;
 
-        var logAuth = new LogSecUserAuth
-        {
-            Iud = "U",
-            IudbyUserId = user.UserId,
-            IuddateTime = DateTime.UtcNow,
-            UserId = user.SecUserAuth.UserId,
-            OrganizationId = user.SecUserAuth.OrganizationId,
-            PasswordHash = user.SecUserAuth.PasswordHash,
-            RefreshToken = user.SecUserAuth.RefreshToken,
-            RefreshTokenExpiry = user.SecUserAuth.RefreshTokenExpiry,
-            LastLogin = user.SecUserAuth.LastLogin
-        };
-
-        context.LogSecUserAuths.Add(logAuth);
-
         await context.SaveChangesAsync(default);
+
+        await auditLogger.WriteAsync(
+            entityType: "SEC_UserAuth",
+            entityId: user.UserId,
+            action: "LOGIN",
+            organizationId: user.OrganizationId,
+            userId: user.UserId,
+            oldValue: null,
+            newValue: new
+            {
+                user.UserId,
+                user.Email,
+                user.OrganizationId,
+                user.SecUserAuth.LastLogin,
+                user.SecUserAuth.RefreshTokenExpiry
+            },
+            ipAddress: null,
+            userAgent: null);
+
+        await auditLogger.WriteAsync(
+            entityType: "SEC_UserAuth",
+            entityId: user.UserId,
+            action: "REFRESH_TOKEN_ISSUED",
+            organizationId: user.OrganizationId,
+            userId: user.UserId,
+            oldValue: null,
+            newValue: new { user.UserId, user.SecUserAuth.RefreshTokenExpiry },
+            ipAddress: null,
+            userAgent: null);
 
         return new LoginResponse<LoginInfo>
         {
             AccessToken = accessToken,
+            RefreshToken = refreshToken,
             User = loginInfo
         };
+    }
+
+    public async Task<ErrorOr<LoginResponse<LoginInfo>>> Refresh(RefreshTokenRequest request)
+    {
+        var auth = await context.SecUserAuths
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.RefreshToken == request.RefreshToken);
+
+        if (auth == null)
+        {
+            await auditLogger.WriteAsync(
+                entityType: "SEC_UserAuth",
+                entityId: null,
+                action: "REFRESH_TOKEN_REJECTED",
+                organizationId: null,
+                userId: null,
+                oldValue: null,
+                newValue: new { Reason = "TOKEN_NOT_FOUND" },
+                ipAddress: null,
+                userAgent: null);
+
+            return Error.Unauthorized(description: "Invalid refresh token.");
+        }
+
+        if (auth.IsRevoked || auth.RefreshTokenExpiry < request.CurrentDate)
+        {
+            await auditLogger.WriteAsync(
+                entityType: "SEC_UserAuth",
+                entityId: auth.UserId,
+                action: "REFRESH_TOKEN_REJECTED",
+                organizationId: auth.User.OrganizationId,
+                userId: auth.UserId,
+                oldValue: null,
+                newValue: new { Reason = auth.IsRevoked ? "REVOKED" : "EXPIRED" },
+                ipAddress: null,
+                userAgent: null);
+
+            return Error.Unauthorized(description: "Refresh token expired/revoked.");
+        }
+
+        var userRole = await context.SecUserRoles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ur => ur.UserId == auth.UserId);
+
+        var loginInfo = new LoginInfo
+        {
+            UserId = auth.UserId,
+            OrganizationId = auth.User.OrganizationId,
+            Email = auth.User.Email,
+            RoleId = userRole?.UserRoleId
+        };
+
+        var accessToken = jwtTokenService.GenerateAccessToken(loginInfo);
+
+        var oldTokenSnapshot = new { auth.RefreshTokenExpiry };
+
+        var newRefreshToken = jwtTokenService.GenerateRefreshToken();
+        auth.RefreshToken = newRefreshToken;
+        auth.RefreshTokenExpiry = request.CurrentDate.AddDays(7);
+        auth.IsRevoked = false;
+
+        await context.SaveChangesAsync(default);
+
+        await auditLogger.WriteAsync(
+            entityType: "SEC_UserAuth",
+            entityId: auth.UserId,
+            action: "REFRESH_TOKEN_REVOKED",
+            organizationId: auth.User.OrganizationId,
+            userId: auth.UserId,
+            oldValue: oldTokenSnapshot,
+            newValue: new { Reason = "ROTATION" },
+            ipAddress: null,
+            userAgent: null);
+
+        await auditLogger.WriteAsync(
+            entityType: "SEC_UserAuth",
+            entityId: auth.UserId,
+            action: "REFRESH_TOKEN_ISSUED",
+            organizationId: auth.User.OrganizationId,
+            userId: auth.UserId,
+            oldValue: null,
+            newValue: new { auth.RefreshTokenExpiry },
+            ipAddress: null,
+            userAgent: null);
+
+        return new LoginResponse<LoginInfo>
+        {
+            AccessToken = accessToken,
+            RefreshToken = newRefreshToken,
+            User = loginInfo
+        };
+    }
+
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Logout(LogoutRequest request)
+    {
+        var auth = await context.SecUserAuths
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.RefreshToken == request.RefreshToken);
+
+        if (auth == null)
+        {
+            return Error.NotFound(description: "Refresh token not found.");
+        }
+
+        auth.IsRevoked = true;
+        auth.RefreshTokenExpiry = request.CurrentDate;
+
+        var rows = await context.SaveChangesAsync(default);
+
+        await auditLogger.WriteAsync(
+            entityType: "SEC_UserAuth",
+            entityId: auth.UserId,
+            action: "LOGOUT",
+            organizationId: auth.User.OrganizationId,
+            userId: auth.UserId,
+            oldValue: null,
+            newValue: new { auth.UserId, Reason = "USER_LOGOUT" },
+            ipAddress: null,
+            userAgent: null);
+
+        await auditLogger.WriteAsync(
+            entityType: "SEC_UserAuth",
+            entityId: auth.UserId,
+            action: "REFRESH_TOKEN_REVOKED",
+            organizationId: auth.User.OrganizationId,
+            userId: auth.UserId,
+            oldValue: null,
+            newValue: new { Reason = "LOGOUT" },
+            ipAddress: null,
+            userAgent: null);
+
+        return new OperationResponse<EncryptedInt> { Id = auth.UserId, RowsAffected = rows };
     }
 
     public async Task<ErrorOr<LoginResponse<LoginInfo>>> Register(RegisterRequest request)
     {
         var dbContext = (DbContext)context;
-
         await using var tx = await dbContext.Database.BeginTransactionAsync();
 
-        var existingUser = await context.SecUsers
-            .FirstOrDefaultAsync(u => u.Email == request.Email);
-
-        if (existingUser != null)
+        try
         {
-            return Error.Conflict(description: "User with this email already exists.");
+            var existingUser = await context.SecUsers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            if (existingUser != null)
+            {
+                return Error.Conflict(description: "User with this email already exists.");
+            }
+
+            var existingOrg = await context.OrgOrganizations
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.OrganizationName == request.OrganizationName);
+
+            if (existingOrg != null)
+            {
+                return Error.Conflict(description: "Organization with this name already exists.");
+            }
+
+            var org = new OrgOrganization
+            {
+                OrganizationName = request.OrganizationName.Trim(),
+                Created = request.Created
+            };
+
+            await context.OrgOrganizations.AddAsync(org);
+            await context.SaveChangesAsync(default);
+
+            var user = new SecUser
+            {
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName.Trim(),
+                Email = request.Email.Trim(),
+                DisplayName = request.DisplayName.Trim(),
+                MobileNo = request.MobileNo.Trim(),
+                ProfileImageUrl = request.ProfileImageUrl,
+                OrganizationId = org.OrganizationId,
+                IsActive = true,
+                Created = request.Created,
+            };
+
+            await context.SecUsers.AddAsync(user);
+            await context.SaveChangesAsync(default);
+
+            var adminRole = new SecRole
+            {
+                RoleName = "Admin",
+                Description = "Organization Admin Role with all permissions",
+                OrganizationId = org.OrganizationId,
+                CreatedByUserId = user.UserId,
+                Created = request.Created,
+                IsActive = true,
+                ValidFrom = request.Created,
+            };
+
+            await context.SecRoles.AddAsync(adminRole);
+            await context.SaveChangesAsync(default);
+
+            var allPermissions = Enum.GetValues(typeof(Permission)).Cast<int>();
+            foreach (var permValue in allPermissions)
+            {
+                var roleClaim = new SecRoleClaim
+                {
+                    RoleId = adminRole.RoleId,
+                    ClaimValue = permValue,
+                    CreatedByUserId = user.UserId,
+                    Created = request.Created
+                };
+                await context.SecRoleClaims.AddAsync(roleClaim);
+            }
+            await context.SaveChangesAsync(default);
+
+            var userRole = new SecUserRole
+            {
+                UserId = user.UserId,
+                RoleId = adminRole.RoleId,
+                CreatedByUserId = user.UserId,
+                Created = request.Created,
+            };
+
+            await context.SecUserRoles.AddAsync(userRole);
+
+            var refreshToken = jwtTokenService.GenerateRefreshToken();
+
+            var auth = new SecUserAuth
+            {
+                UserId = user.UserId,
+                PasswordHash = passwordHasher.HashPassword(user, request.Password),
+                RefreshToken = refreshToken,
+                RefreshTokenExpiry = request.Created.AddDays(7),
+                IsRevoked = false,
+                LastLogin = request.Created
+            };
+
+            await context.SecUserAuths.AddAsync(auth);
+
+            await context.SaveChangesAsync(default);
+            await tx.CommitAsync();
+
+            await auditLogger.WriteAsync(
+                entityType: "SEC_User",
+                entityId: user.UserId,
+                action: "REGISTER",
+                organizationId: user.OrganizationId,
+                userId: user.UserId,
+                oldValue: null,
+                newValue: new
+                {
+                    user.UserId,
+                    user.Email,
+                    user.OrganizationId,
+                    adminRole.RoleId,
+                    adminRole.RoleName
+                },
+                ipAddress: null,
+                userAgent: null);
+
+            var loginInfo = new LoginInfo
+            {
+                UserId = user.UserId,
+                OrganizationId = org.OrganizationId,
+                Email = user.Email,
+                RoleId = adminRole.RoleId
+            };
+
+            var accessToken = jwtTokenService.GenerateAccessToken(loginInfo);
+
+            return new LoginResponse<LoginInfo>
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                User = loginInfo
+            };
         }
-
-        var existingOrg = await context.OrgOrganizations
-            .FirstOrDefaultAsync(o => o.OrganizationName == request.OrganizationName);
-
-        if (existingOrg != null)
+        catch (Exception ex)
         {
-            return Error.Conflict(description: "Organization with this name already exists.");
+            await tx.RollbackAsync();
+
+            await auditLogger.WriteAsync(
+                entityType: "SEC_User",
+                entityId: null,
+                action: "REGISTER_FAILED",
+                organizationId: null,
+                userId: null,
+                oldValue: null,
+                newValue: new { request.Email, request.OrganizationName, ex.Message },
+                ipAddress: null,
+                userAgent: null);
+
+            return Error.Failure("Account.Register.Failed", ex.Message);
         }
-
-        var user = new SecUser
-        {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
-            UserName = request.Email,
-            MobileNo = request.MobileNo,
-            UserProfileImageUrl = request.UserProfileImageUrl,
-            IsActive = true,
-            CreatedByUserId = null,
-            ModifiedByUserId = null,
-            Created = DateTime.UtcNow,
-            Modified = DateTime.UtcNow
-        };
-
-        await context.SecUsers.AddAsync(user);
-        await context.SaveChangesAsync(default);
-
-        user.CreatedByUserId = user.UserId;
-        user.ModifiedByUserId = user.UserId;
-
-        var org = new OrgOrganization
-        {
-            OrganizationName = request.OrganizationName,
-            CreatedByUserId = user.UserId,
-            ModifiedByUserId = user.UserId,
-            Created = DateTime.UtcNow,
-            Modified = DateTime.UtcNow
-        };
-
-        await context.OrgOrganizations.AddAsync(org);
-        await context.SaveChangesAsync(default);
-
-        var auth = new SecUserAuth
-        {
-            UserId = user.UserId,
-            OrganizationId = org.OrganizationId,
-            PasswordHash = passwordHasher.HashPassword(user, request.Password),
-            RefreshToken = null,
-            RefreshTokenExpiry = DateTime.UtcNow.AddDays(7),
-            LastLogin = DateTime.UtcNow
-        };
-
-        await context.SecUserAuths.AddAsync(auth);
-
-        var logUser = new LogSecUser
-        {
-            Iud = "I",
-            IuddateTime = DateTime.UtcNow,
-            IudbyUserId = user.UserId,
-            UserId = user.UserId,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Email = user.Email,
-            UserName = user.UserName,
-            MobileNo = user.MobileNo,
-            UserProfileImageUrl = user.UserProfileImageUrl,
-            IsActive = user.IsActive,
-            CreatedByUserId = user.CreatedByUserId,
-            ModifiedByUserId = user.ModifiedByUserId,
-            Created = user.Created,
-            Modified = user.Modified
-        };
-
-        context.LogSecUsers.Add(logUser);
-
-        var logOrg = new LogOrgOrganization
-        {
-            Iud = "I",
-            IuddateTime = DateTime.UtcNow,
-            IudbyUserId = user.UserId,
-            OrganizationId = org.OrganizationId,
-            OrganizationName = org.OrganizationName,
-            Created = org.Created,
-            Modified = org.Modified
-        };
-
-        context.LogOrgOrganizations.Add(logOrg);
-
-        await context.SaveChangesAsync(default);
-
-        var loginInfo = new LoginInfo
-        {
-            UserId = user.UserId,
-            OrganizationId = org.OrganizationId,
-            Email = user.Email,
-            RoleId = null
-        };
-
-        var accessToken = jwtTokenService.GenerateAccessToken(loginInfo);
-        var refreshToken = jwtTokenService.GenerateRefreshToken();
-
-        auth.RefreshToken = refreshToken;
-        auth.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-        auth.LastLogin = DateTime.UtcNow;
-
-        var logAuth = new LogSecUserAuth
-        {
-            Iud = "I",
-            IudbyUserId = user.UserId,
-            IuddateTime = DateTime.UtcNow,
-            UserId = auth.UserId,
-            OrganizationId = auth.OrganizationId,
-            PasswordHash = auth.PasswordHash,
-            RefreshToken = auth.RefreshToken,
-            RefreshTokenExpiry = auth.RefreshTokenExpiry,
-            LastLogin = auth.LastLogin
-        };
-
-        context.LogSecUserAuths.Add(logAuth);
-
-        await context.SaveChangesAsync(default);
-        await tx.CommitAsync();
-
-        var response = new LoginResponse<LoginInfo>
-        {
-            AccessToken = accessToken,
-            User = loginInfo
-        };
-
-        return response;
     }
 }
