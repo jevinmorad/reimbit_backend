@@ -8,7 +8,6 @@ public class InsertExpenseRequest
     public required EncryptedInt CategoryId { get; set; }
     public required string Title { get; set; }
     public required decimal Amount { get; set; } = 0;
-    public EncryptedInt? ProjectId { get; set; } = null;
     public string? Currency { get; set; } = "INR";
     public string? ReceiptUrl { get; set; } = null;
     public string? Description { get; set; } = null;

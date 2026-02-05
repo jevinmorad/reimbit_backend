@@ -6,8 +6,6 @@ public partial class ExpExpenseReport
 
     public int OrganizationId { get; set; }
 
-    public int? ProjectId { get; set; }
-
     public DateOnly PeriodStart { get; set; }
 
     public DateOnly PeriodEnd { get; set; }
@@ -41,6 +39,4 @@ public partial class ExpExpenseReport
     public virtual OrgOrganization Organization { get; set; } = null!;
 
     public virtual ICollection<PayPayout> PayPayouts { get; set; } = new List<PayPayout>();
-
-    public virtual ProjProject? Project { get; set; }
 }

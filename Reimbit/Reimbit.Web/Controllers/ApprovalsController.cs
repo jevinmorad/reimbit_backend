@@ -30,7 +30,7 @@ public sealed class ApprovalsController(
     [HttpPost("{approvalInstanceId}/approve")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Approve")]
-    [HasPermission(Permission.Expense_Approve)]
+    [HasPermission(Permission.ExpenseApprove)]
     public async Task<IActionResult> Approve([FromRoute] EncryptedInt approvalInstanceId)
     {
         var result = await service.Approve(new ApproveApprovalRequest { ApprovalInstanceId = approvalInstanceId });
@@ -40,7 +40,7 @@ public sealed class ApprovalsController(
     [HttpPost("{approvalInstanceId}/reject")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Reject")]
-    [HasPermission(Permission.Expense_Reject)]
+    [HasPermission(Permission.ExpenseReject)]
     public async Task<IActionResult> Reject([FromRoute] EncryptedInt approvalInstanceId, [FromBody] RejectApprovalRequest request)
     {
         request.ApprovalInstanceId = approvalInstanceId;

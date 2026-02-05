@@ -115,7 +115,7 @@ public sealed class DelegationRepository(
             }
 
             // Rule #4: delegate must have approval permission
-            // Implemented as: delegate must be an "approver-eligible" user in current org (manager/project manager/any approver role used in rules).
+            // Implemented as: delegate must be an "approver-eligible" user in current org (manager any approver role used in rules).
             var delegateIsApproverEligible = await IsApproverEligibleAsync(request.OrganizationId, delegateUserId);
             if (!delegateIsApproverEligible)
             {
@@ -266,15 +266,6 @@ public sealed class DelegationRepository(
             return true;
         }
 
-        // 2) Is a Project Manager
-        var isProjectManager = await context.ProjProjects
-            .AsNoTracking()
-            .AnyAsync(p => p.OrganizationId == organizationId && p.ManagerId == userId && p.IsActive);
-
-        if (isProjectManager)
-        {
-            return true;
-        }
 
         // 3) Is in any role referenced by approval levels (role-based / finance roles)
         var approverRoleIds = await context.AprApprovalLevels

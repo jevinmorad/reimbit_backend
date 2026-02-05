@@ -134,4 +134,20 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
             Description = entity.Description
         };
     }
+
+    public async Task<ErrorOr<List<OptionsResponse<EncryptedInt>>>> SelectComboBox(int organizationId)
+    {
+        var data = context.ExpCategories
+            .AsNoTracking()
+            .Where(x => x.OrganizationId == organizationId && x.IsActive)
+            .OrderBy(x => x.CategoryName)
+            .Select(x => new OptionsResponse<EncryptedInt>
+            {
+                Value = x.CategoryId,
+                Label = x.CategoryName
+            })
+            .ToList();
+
+        return data;
+    }
 }

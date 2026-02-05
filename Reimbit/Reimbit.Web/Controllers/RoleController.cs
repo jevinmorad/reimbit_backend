@@ -12,7 +12,7 @@ namespace Reimbit.Web.Controllers;
 
 [ApiController]
 [Authorize]
-[HasPermission(Permission.Role_Manage)]
+[HasPermission(Permission.RoleManage)]
 [Route("/api/[controller]")]
 public class RoleController(
     IRoleService roleService,

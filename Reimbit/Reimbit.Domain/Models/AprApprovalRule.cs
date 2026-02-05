@@ -16,8 +16,6 @@ public partial class AprApprovalRule
 
     public bool AppliesOnPolicyViolation { get; set; }
 
-    public bool AppliesOnProject { get; set; }
-
     public bool IsActive { get; set; }
 
     public virtual ICollection<AprApprovalLevel> AprApprovalLevels { get; set; } = new List<AprApprovalLevel>();

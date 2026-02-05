@@ -41,8 +41,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public virtual DbSet<PayPayout> PayPayouts { get; set; }
 
-    public virtual DbSet<ProjProject> ProjProjects { get; set; }
-
     public virtual DbSet<SecDelegateApprover> SecDelegateApprovers { get; set; }
 
     public virtual DbSet<SecRole> SecRoles { get; set; }
@@ -179,7 +177,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
                 .HasColumnType("datetime");
             entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
             entity.Property(e => e.ReceiptUrl).HasMaxLength(25);
             entity.Property(e => e.Status).HasDefaultValue((byte)1);
             entity.Property(e => e.Title).HasMaxLength(250);
@@ -203,10 +200,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .HasForeignKey(d => d.OrganizationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__EXP_Expen__Organ__1EA48E88");
-
-            entity.HasOne(d => d.Project).WithMany(p => p.ExpExpenses)
-                .HasForeignKey(d => d.ProjectId)
-                .HasConstraintName("FK__EXP_Expen__Proje__208CD6FA");
         });
 
         modelBuilder.Entity<ExpExpenseRejection>(entity =>
@@ -248,7 +241,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
             entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
             entity.Property(e => e.Title).HasMaxLength(150);
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(12, 2)");
             entity.Property(e => e.ViewedAt).HasColumnType("datetime");
@@ -267,10 +259,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .HasForeignKey(d => d.OrganizationId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__EXP_Expen__Organ__282DF8C2");
-
-            entity.HasOne(d => d.Project).WithMany(p => p.ExpExpenseReports)
-                .HasForeignKey(d => d.ProjectId)
-                .HasConstraintName("FK__EXP_Expen__Proje__29221CFB");
         });
 
         modelBuilder.Entity<ExpPolicy>(entity =>
@@ -385,50 +373,6 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 .HasForeignKey(d => d.ReportId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__PAY_Payou__Repor__503BEA1C");
-        });
-
-        modelBuilder.Entity<ProjProject>(entity =>
-        {
-            entity.HasKey(e => e.ProjectId).HasName("PK__PROJ_Pro__761ABED06E1301CB");
-
-            entity.ToTable("PROJ_Project");
-
-            entity.HasIndex(e => new { e.OrganizationId, e.ProjectName }, "PROJ_ORG_Project").IsUnique();
-
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-            entity.Property(e => e.Created).HasColumnType("datetime");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserID");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.ManagerId).HasColumnName("ManagerID");
-            entity.Property(e => e.Modified)
-                .HasDefaultValueSql("([dbo].[GETServerDateTime]())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.ModifiedByUserId).HasColumnName("ModifiedByUserID");
-            entity.Property(e => e.OrganizationId).HasColumnName("OrganizationID");
-            entity.Property(e => e.ProjectDescription).HasMaxLength(500);
-            entity.Property(e => e.ProjectDetails).HasMaxLength(500);
-            entity.Property(e => e.ProjectLogoUrl).HasMaxLength(250);
-            entity.Property(e => e.ProjectName).HasMaxLength(250);
-
-            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ProjProjectCreatedByUsers)
-                .HasForeignKey(d => d.CreatedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Creat__0B91BA14");
-
-            entity.HasOne(d => d.Manager).WithMany(p => p.ProjProjectManagers)
-                .HasForeignKey(d => d.ManagerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Manag__09A971A2");
-
-            entity.HasOne(d => d.ModifiedByUser).WithMany(p => p.ProjProjectModifiedByUsers)
-                .HasForeignKey(d => d.ModifiedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Modif__0C85DE4D");
-
-            entity.HasOne(d => d.Organization).WithMany(p => p.ProjProjects)
-                .HasForeignKey(d => d.OrganizationId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__PROJ_Proj__Organ__08B54D69");
         });
 
         modelBuilder.Entity<SecDelegateApprover>(entity =>

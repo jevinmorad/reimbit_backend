@@ -60,12 +60,6 @@ public partial class SecUser
 
     public virtual OrgOrganization? Organization { get; set; }
 
-    public virtual ICollection<ProjProject> ProjProjectCreatedByUsers { get; set; } = new List<ProjProject>();
-
-    public virtual ICollection<ProjProject> ProjProjectManagers { get; set; } = new List<ProjProject>();
-
-    public virtual ICollection<ProjProject> ProjProjectModifiedByUsers { get; set; } = new List<ProjProject>();
-
     public virtual ICollection<SecDelegateApprover> SecDelegateApproverDelegateUsers { get; set; } = new List<SecDelegateApprover>();
 
     public virtual ICollection<SecDelegateApprover> SecDelegateApproverUsers { get; set; } = new List<SecDelegateApprover>();

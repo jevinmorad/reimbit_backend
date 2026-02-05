@@ -8,9 +8,7 @@ namespace Reimbit.Application.Expenses.Expense;
 public interface IExpenseService
 {
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseRequest request);
-    Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListMyExpenses();
-    Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(EncryptedInt userId);
-    Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId);
+    Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListExpenses(ListExpenseRequest request);
     Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization();
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt expenseId);

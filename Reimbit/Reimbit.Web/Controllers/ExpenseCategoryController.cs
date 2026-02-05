@@ -17,7 +17,7 @@ public class ExpenseCategoryController(
     ICurrentUserProvider currentUserProvider
 ) : ApiController(currentUserProvider)
 {
-    [HttpPost]
+    [HttpPost("Insert")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create expense category")]
     public async Task<IActionResult> Insert([FromBody] InsertExpenseCategoriesRequest request)
@@ -26,7 +26,7 @@ public class ExpenseCategoryController(
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
-    [HttpGet]
+    [HttpPost("SelectPage")]
     [Produces<PagedResult<ListExpenseCategoriesResponse>>]
     [EndpointSummary("List expense categories")]
     public async Task<IActionResult> List()
@@ -61,4 +61,13 @@ public class ExpenseCategoryController(
         var result = await service.Get(id);
         return result.Match(_ => Ok(result.Value), Problem);
     }
-}
+
+    [HttpGet("SelectComboBox")]
+    [Produces<List<OptionsResponse<EncryptedInt>>>]
+    [EndpointSummary("Category dropdown")]
+    public async Task<IActionResult> SelectComboBox()
+    {
+        var result = await service.SelectComboBox();
+        return result.Match(_ => Ok(result.Value), Problem);
+    }
+}   

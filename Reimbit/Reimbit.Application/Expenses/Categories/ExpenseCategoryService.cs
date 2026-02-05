@@ -49,4 +49,9 @@ public class ExpenseCategoryService(
     {
         return await repository.Get(categoryId);
     }
+
+    public async Task<ErrorOr<List<OptionsResponse<EncryptedInt>>>> SelectComboBox()
+    {
+        return await repository.SelectComboBox(currentUser.OrganizationId);
+    }
 }

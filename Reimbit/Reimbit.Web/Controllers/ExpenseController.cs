@@ -18,54 +18,36 @@ public class ExpenseController(
     ICurrentUserProvider currentUserProvider
 ) : ApiController(currentUserProvider)
 {
-    [HttpPost]
+    [HttpPost("Insert")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create expense")]
-    [HasPermission(Permission.Expense_Create)]
+    [HasPermission(Permission.ExpenseCreate)]
     public async Task<IActionResult> Insert([FromBody] InsertExpenseRequest request)
     {
         var result = await service.Insert(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
-    [HttpGet("my-expenses")]
+    [HttpPost("SelectPage")]
     [Produces<PagedResult<ListExpensesResponse>>]
     [EndpointSummary("My expenses list")]
-    public async Task<IActionResult> ListMyExpenses()
+    public async Task<IActionResult> ListExpenses(ListExpenseRequest request)
     {
-        var result = await service.ListMyExpenses();
-        return result.Match(_ => Ok(result.Value), Problem);
-    }
-
-    [HttpGet("user/{userId}")]
-    [Produces<PagedResult<ListExpensesResponse>>]
-    [EndpointSummary("Expenses by user")]
-    public async Task<IActionResult> ListByUserId(EncryptedInt userId)
-    {
-        var result = await service.ListByUserId(userId);
-        return result.Match(_ => Ok(result.Value), Problem);
-    }
-
-    [HttpGet("project/{projectId}")]
-    [Produces<PagedResult<ListExpensesResponse>>]
-    [EndpointSummary("Expenses by project")]
-    public async Task<IActionResult> ListByProject(EncryptedInt projectId)
-    {
-        var result = await service.ListByProject(projectId);
+        var result = await service.ListExpenses(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
     [HttpGet("organization")]
     [Produces<PagedResult<ListExpensesResponse>>]
     [EndpointSummary("Expenses by organization")]
-    [HasPermission(Permission.Expense_ViewAll)]
+    [HasPermission(Permission.ExpenseViewAll)]
     public async Task<IActionResult> ListByOrganization()
     {
         var result = await service.ListByOrganization();
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
-    [HttpPut]
+    [HttpPut("Update")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Update expense")]
     public async Task<IActionResult> Update([FromBody] UpdateExpenseRequest request)

@@ -28,7 +28,6 @@ public class ExpenseRepository(
             {
                 OrganizationId = request.OrganizationId,
                 EmployeeId = request.UserId,
-                ProjectId = request.ProjectId ?? null,
                 CategoryId = request.CategoryId,
                 Title = request.Title,
                 Amount = request.Amount,
@@ -56,7 +55,6 @@ public class ExpenseRepository(
                     expense.ExpenseId,
                     expense.OrganizationId,
                     expense.EmployeeId,
-                    expense.ProjectId,
                     expense.CategoryId,
                     expense.Title,
                     expense.Amount,
@@ -82,32 +80,69 @@ public class ExpenseRepository(
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(EncryptedInt userId)
+    private static IQueryable<ListExpensesResponse> ApplySorting(
+        IQueryable<ListExpensesResponse> query,
+        string? sortField,
+        string? sortOrder)
     {
-        var query = context.ExpExpenses
+        var desc = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase);
+
+        return (sortField ?? string.Empty).Trim() switch
+        {
+            nameof(ListExpensesResponse.CategoryName) =>
+                desc ? query.OrderByDescending(x => x.CategoryName) : query.OrderBy(x => x.CategoryName),
+
+            nameof(ListExpensesResponse.Title) =>
+                desc ? query.OrderByDescending(x => x.Title) : query.OrderBy(x => x.Title),
+
+            nameof(ListExpensesResponse.Amount) =>
+                desc ? query.OrderByDescending(x => x.Amount) : query.OrderBy(x => x.Amount),
+
+            nameof(ListExpensesResponse.Currency) =>
+                desc ? query.OrderByDescending(x => x.Currency) : query.OrderBy(x => x.Currency),
+
+            nameof(ListExpensesResponse.Status) =>
+                desc ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
+
+            nameof(ListExpensesResponse.Created) =>
+                desc ? query.OrderByDescending(x => x.Created) : query.OrderBy(x => x.Created),
+
+            _ => query.OrderByDescending(x => x.Created)
+        };
+    }
+
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> List(ListExpenseRequest request)
+    {
+        var baseQuery = context.ExpExpenses
             .AsNoTracking()
-            .Include(x => x.Project)
             .Include(x => x.Category)
-            .Where(x => x.EmployeeId == (int)userId)
+            .Where(x =>
+                (!request.UserID.HasValue || x.EmployeeId == (int)request.UserID.Value))
             .Select(x => new ListExpensesResponse
             {
                 ExpenseId = x.ExpenseId,
-                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
                 CategoryId = x.CategoryId,
                 CategoryName = x.Category.CategoryName,
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
-                Status = x.Status,
+                Status = ((ExpenseStatus)x.Status).ToString(),
                 Created = x.Created
             });
 
-        var data = await query.ToListAsync();
+        var total = await baseQuery.CountAsync();
+
+        var query = ApplySorting(baseQuery, request.SortField, request.SortOrder);
+
+        var data = await query
+            .Skip(request.PageOffset)
+            .Take(request.PageSize)
+            .ToListAsync();
 
         return new PagedResult<ListExpensesResponse>
         {
             Data = data,
-            Total = data.Count
+            Total = total
         };
     }
 
@@ -115,48 +150,17 @@ public class ExpenseRepository(
     {
         var query = context.ExpExpenses
             .AsNoTracking()
-            .Include(x => x.Project)
             .Include(x => x.Category)
             .Where(x => x.OrganizationId == organizationId)
             .Select(x => new ListExpensesResponse
             {
                 ExpenseId = x.ExpenseId,
-                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
                 CategoryId = x.CategoryId,
                 CategoryName = x.Category.CategoryName,
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
-                Status = x.Status,
-                Created = x.Created
-            });
-
-        var data = await query.ToListAsync();
-
-        return new PagedResult<ListExpensesResponse>
-        {
-            Data = data,
-            Total = data.Count
-        };
-    }
-
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId)
-    {
-        var query = context.ExpExpenses
-            .AsNoTracking()
-            .Include(x => x.Project)
-            .Include(x => x.Category)
-            .Where(x => x.ProjectId == projectId)
-            .Select(x => new ListExpensesResponse
-            {
-                ExpenseId = x.ExpenseId,
-                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
-                CategoryId = x.CategoryId,
-                CategoryName = x.Category.CategoryName,
-                Title = x.Title,
-                Amount = x.Amount,
-                Currency = x.Currency,
-                Status = x.Status,
+                Status = ((ExpenseStatus)x.Status).ToString(),
                 Created = x.Created
             });
 
@@ -178,9 +182,9 @@ public class ExpenseRepository(
 
         try
         {
+
             var expense = await context.ExpExpenses.FirstOrDefaultAsync(x =>
-                x.ExpenseId == request.ExpenseId &&
-                x.OrganizationId == request.OrganizationId);
+                x.OrganizationId == request.OrganizationId && x.ExpenseId == (int)request.ExpenseId);
 
             if (expense == null)
             {
@@ -204,7 +208,7 @@ public class ExpenseRepository(
                 expense.Modified
             };
 
-            expense.CategoryId = request.CategoryId;
+            expense.CategoryId = (int)request.CategoryId;
             expense.Title = request.Title;
             expense.Amount = request.Amount;
             expense.Currency = request.Currency ?? "INR";
@@ -284,7 +288,6 @@ public class ExpenseRepository(
                     expense.ExpenseId,
                     expense.OrganizationId,
                     expense.EmployeeId,
-                    expense.ProjectId,
                     expense.CategoryId,
                     expense.Title,
                     expense.Amount,
@@ -316,21 +319,18 @@ public class ExpenseRepository(
     {
         var expense = await context.ExpExpenses
             .AsNoTracking()
-            .Include(x => x.Project)
             .Include(x => x.Category)
             .Where(x => x.ExpenseId == (int)expenseId)
             .Select(x => new GetExpenseResponse
             {
                 ExpenseId = x.ExpenseId,
-                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
                 CategoryId = x.CategoryId,
-                CategoryName = x.Category.CategoryName,
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
                 ReceiptUrl = x.ReceiptUrl,
                 Description = x.Description,
-                Status = x.Status,
+                Status = ((ExpenseStatus)x.Status).ToString(),
                 Created = x.Created
             })
             .FirstOrDefaultAsync();
@@ -347,14 +347,12 @@ public class ExpenseRepository(
     {
         var expense = await context.ExpExpenses
             .AsNoTracking()
-            .Include(x => x.Project)
             .Include(x => x.Category)
             .Include(x => x.Employee)
             .Include(x => x.CreatedByUser)
             .Where(x => x.ExpenseId == expenseId)
             .Select(x => new ViewExpenseResponse
             {
-                ExpenseId = x.ExpenseId,
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
@@ -362,13 +360,10 @@ public class ExpenseRepository(
                 AttachmentUrl = x.ReceiptUrl,
                 ExpenseStatus = x.Status.ToString(),
                 RejectionReason = null,
-                ProjectId = x.ProjectId ?? 0,
-                ProjectName = x.Project != null ? x.Project.ProjectName : string.Empty,
-                CategoryId = x.CategoryId,
                 CategoryName = x.Category.CategoryName,
-                UserDisplayName = $"{x.Employee.FirstName} {x.Employee.LastName}",
-                CreatedByUserDisplayName = $"{x.CreatedByUser.FirstName} {x.CreatedByUser.LastName}",
-                ModifiedByUserDisplayName = $"{x.CreatedByUser.FirstName} {x.CreatedByUser.LastName}",
+                UserDisplayName = x.Employee.DisplayName,
+                CreatedByUserDisplayName = x.Employee.DisplayName,
+                ModifiedByUserDisplayName = x.Employee.DisplayName,
                 Created = x.Created,
                 Modified = x.Modified
             })

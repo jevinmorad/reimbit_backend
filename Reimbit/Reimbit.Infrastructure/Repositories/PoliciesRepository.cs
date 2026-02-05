@@ -139,7 +139,6 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
             .Select(x => new GetPolicyResponse
             {
                 PolicyId = x.PolicyId,
-                ProjectId = 0,
                 CategoryId = x.CategoryId,
                 MaxAmount = x.MaxAmount,
                 IsReceiptMandatory = x.IsReceiptMandatory,

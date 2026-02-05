@@ -18,14 +18,15 @@ builder.Services.AddAegisInt(options =>
     options.MinLength = section.GetValue<int>("MinLength");
 });
 
-// CORS (allow requests from any origin)
+// CORS (allow requests from any origin, including credentials)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAny", policy =>
         policy
-            .AllowAnyOrigin()
+            .SetIsOriginAllowed(_ => true)
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 // Add services to the container.

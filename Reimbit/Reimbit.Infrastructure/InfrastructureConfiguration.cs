@@ -35,12 +35,12 @@ public static class InfrastructureConfiguration
         services.AddScoped<IExpenseRepository, ExpenseRepository>();
         services.AddScoped<IExpenseCategoryRepository, ExpenseCategoryRepository>();
         services.AddScoped<IPoliciesRepository, PoliciesRepository>();
-        services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IExpenseReportRepository, ExpenseReportRepository>();
         services.AddScoped<IApprovalRepository, ApprovalRepository>();
         services.AddScoped<IFinanceRepository, FinanceRepository>();
         services.AddScoped<IDelegationRepository, DelegationRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }

@@ -8,13 +8,13 @@ public class PagedRequest
 
     private int pageSize;
 
-    private const int _minPageSize = 100;
+    private const int _minPageSize = 10;
 
     private const int _maxPageSize = 5000;
 
     private string sortOrder;
 
-    private string[] sortOrders = new string[2] { "ASC", "DESC" };
+    private string[] sortOrders = new string[2] { "asc", "desc" };
 
     public int PageOffset
     {
@@ -44,7 +44,7 @@ public class PagedRequest
 
             if (pageSize < _minPageSize || pageSize > _maxPageSize)
             {
-                return 100;
+                return 10;
             }
 
             return pageSize;

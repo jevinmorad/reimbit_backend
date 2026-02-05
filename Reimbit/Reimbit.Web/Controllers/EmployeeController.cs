@@ -12,7 +12,7 @@ namespace Reimbit.Web.Controllers;
 
 [ApiController]
 [Authorize]
-[HasPermission(Permission.User_Manage)]
+[HasPermission(Permission.UserManage)]
 [Route("api/[controller]")]
 public class EmployeeController(
     ICurrentUserProvider currentUserProvider,

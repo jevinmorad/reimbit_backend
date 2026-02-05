@@ -27,14 +27,13 @@ public class ExpenseService(
         return await repository.Insert(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListMyExpenses()
-        => await repository.ListByUserId(currentUser.UserId);
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListExpenses(ListExpenseRequest request)
+    {
+        request.UserID = currentUser.UserId;
+        return await repository.List(request);
+    }
 
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(EncryptedInt userId)
-        => await repository.ListByUserId(userId);
-
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByProject(EncryptedInt projectId)
-        => await repository.ListByProject(projectId);
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(ListExpenseRequest request) =>  await repository.List(request);
 
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization()
         => await repository.ListByOrganization(currentUser.OrganizationId);

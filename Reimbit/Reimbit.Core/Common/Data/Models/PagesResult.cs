@@ -6,6 +6,7 @@ public class PagedResult<TModel>
     public IReadOnlyList<TModel> Data { get; set; }
     public PagedResult()
     {
+        Total = Total;
         Data = new List<TModel>();
     }
 }

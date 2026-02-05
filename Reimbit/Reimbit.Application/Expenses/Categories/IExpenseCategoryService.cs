@@ -12,4 +12,5 @@ public interface IExpenseCategoryService
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseCategoriesRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt categoryId);
     Task<ErrorOr<GetExpenseCategoriesResponse>> Get(EncryptedInt categoryId);
+    Task<ErrorOr<List<OptionsResponse<EncryptedInt>>>> SelectComboBox();
 }

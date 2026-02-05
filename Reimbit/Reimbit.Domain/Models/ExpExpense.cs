@@ -8,8 +8,6 @@ public partial class ExpExpense
 
     public int EmployeeId { get; set; }
 
-    public int? ProjectId { get; set; }
-
     public int CategoryId { get; set; }
 
     public string Title { get; set; } = null!;
@@ -41,6 +39,4 @@ public partial class ExpExpense
     public virtual ICollection<ExpReportExpense> ExpReportExpenses { get; set; } = new List<ExpReportExpense>();
 
     public virtual OrgOrganization Organization { get; set; } = null!;
-
-    public virtual ProjProject? Project { get; set; }
 }

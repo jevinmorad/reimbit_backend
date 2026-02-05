@@ -27,7 +27,6 @@ public sealed class ExpenseReportRepository(
             var report = new ExpExpenseReport
             {
                 OrganizationId = request.OrganizationId,
-                ProjectId = request.ProjectId,
                 PeriodStart = request.PeriodStart,
                 PeriodEnd = request.PeriodEnd,
                 Title = request.Title,
@@ -54,7 +53,6 @@ public sealed class ExpenseReportRepository(
                 {
                     report.ReportId,
                     report.OrganizationId,
-                    report.ProjectId,
                     report.PeriodStart,
                     report.PeriodEnd,
                     report.Title,
@@ -453,7 +451,6 @@ public sealed class ExpenseReportRepository(
                 Title = r.Title,
                 PeriodStart = r.PeriodStart,
                 PeriodEnd = r.PeriodEnd,
-                ProjectId = r.ProjectId,
                 Status = r.Status,
                 TotalAmount = r.TotalAmount,
                 Created = r.Created
@@ -482,15 +479,8 @@ public sealed class ExpenseReportRepository(
                 .Select(m => (int?)m.ManagerId)
                 .FirstOrDefaultAsync(),
 
-            2 => report.ProjectId == null
-                ? null
-                : await context.ProjProjects
-                    .AsNoTracking()
-                    .Where(p => p.ProjectId == report.ProjectId.Value && p.OrganizationId == organizationId)
-                    .Select(p => (int?)p.ManagerId)
-                    .FirstOrDefaultAsync(),
 
-            3 or 5 or 6 => level.ApproverRoleId == null
+            2 or 4 or 5 => level.ApproverRoleId == null
                 ? null
                 : await context.SecUserRoles
                     .AsNoTracking()
@@ -501,7 +491,7 @@ public sealed class ExpenseReportRepository(
                     .Select(ur => (int?)ur.UserId)
                     .FirstOrDefaultAsync(),
 
-            4 => level.SpecificUserId,
+            3 => level.SpecificUserId,
 
             _ => null
         };

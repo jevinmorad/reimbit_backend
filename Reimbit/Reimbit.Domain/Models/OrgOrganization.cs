@@ -18,8 +18,6 @@ public partial class OrgOrganization
 
     public virtual ICollection<ExpExpense> ExpExpenses { get; set; } = new List<ExpExpense>();
 
-    public virtual ICollection<ProjProject> ProjProjects { get; set; } = new List<ProjProject>();
-
     public virtual ICollection<SecRole> SecRoles { get; set; } = new List<SecRole>();
 
     public virtual ICollection<SecUser> SecUsers { get; set; } = new List<SecUser>();

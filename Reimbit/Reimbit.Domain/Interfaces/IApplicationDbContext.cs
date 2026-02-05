@@ -29,8 +29,6 @@ public interface IApplicationDbContext
 
     DbSet<PayPayout> PayPayouts { get; set; }
 
-    DbSet<ProjProject> ProjProjects { get; set; }
-
     DbSet<SecDelegateApprover> SecDelegateApprovers { get; set; }
 
     DbSet<SecRole> SecRoles { get; set; }

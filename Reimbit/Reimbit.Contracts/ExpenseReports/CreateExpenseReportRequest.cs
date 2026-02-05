@@ -8,7 +8,6 @@ public class CreateExpenseReportRequest
     public required DateOnly PeriodStart { get; set; }
     public required DateOnly PeriodEnd { get; set; }
     public required string Title { get; set; }
-    public EncryptedInt? ProjectId { get; set; }
 
     [JsonIgnore]
     public int OrganizationId { get; set; }
