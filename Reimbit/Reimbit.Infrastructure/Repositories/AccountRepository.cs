@@ -120,6 +120,11 @@ public class AccountRepository(
 
     public async Task<ErrorOr<LoginResponse<LoginInfo>>> Refresh(RefreshTokenRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return Error.Unauthorized(description: "Refresh token is missing.");
+        }
+
         var auth = await context.SecUserAuths
             .Include(a => a.User)
             .FirstOrDefaultAsync(a => a.RefreshToken == request.RefreshToken);
@@ -211,6 +216,11 @@ public class AccountRepository(
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Logout(LogoutRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return Error.Unauthorized(description: "Refresh token is missing.");
+        }
+
         var auth = await context.SecUserAuths
             .Include(a => a.User)
             .FirstOrDefaultAsync(a => a.RefreshToken == request.RefreshToken);

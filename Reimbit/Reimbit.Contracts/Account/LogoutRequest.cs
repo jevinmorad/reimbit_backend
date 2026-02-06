@@ -4,7 +4,9 @@ namespace Reimbit.Contracts.Account;
 
 public sealed class LogoutRequest
 {
-    public required string RefreshToken { get; set; }
+    public LogoutRequest() { }
+
+    public string? RefreshToken { get; set; }
     [JsonIgnore]
     public DateTime CurrentDate { get; set; }
 }

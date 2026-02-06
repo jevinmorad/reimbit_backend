@@ -4,7 +4,9 @@ namespace Reimbit.Contracts.Account;
 
 public sealed class RefreshTokenRequest
 {
-    public required string RefreshToken { get; set; }
+    public RefreshTokenRequest() { }
+
+    public string? RefreshToken { get; set; }
     [JsonIgnore]
     public DateTime CurrentDate { get; set; }
 }

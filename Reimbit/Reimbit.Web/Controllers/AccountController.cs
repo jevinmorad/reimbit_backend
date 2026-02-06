@@ -14,34 +14,24 @@ public class AccountController(
     IAccountService accountService
 ) : ApiController(currentUserProvider)
 {
-    private static void AppendAuthCookies(HttpResponse response, string accessToken, string refreshToken)
+    private static void AppendAuthCookies(HttpResponse response, string refreshToken)
     {
-        var accessCookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Lax,
-            Path = "/",
-            Expires = DateTimeOffset.UtcNow.AddDays(3)
-        };
-
         var refreshCookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
+            Secure = false,
             SameSite = SameSiteMode.Lax,
             Path = "/",
+            IsEssential = true,
             Expires = DateTimeOffset.UtcNow.AddDays(7)
         };
 
-        response.Cookies.Append("access_token", accessToken, accessCookieOptions);
-        response.Cookies.Append("refresh_token", refreshToken, refreshCookieOptions);
+        response.Cookies.Append("refreshToken", refreshToken, refreshCookieOptions);
     }
 
     private static void ClearAuthCookies(HttpResponse response)
     {
-        response.Cookies.Delete("access_token");
-        response.Cookies.Delete("refresh_token");
+        response.Cookies.Delete("refreshToken", new CookieOptions { Path = "/" });
     }
 
     [HttpPost("login")]
@@ -57,7 +47,7 @@ public class AccountController(
                 if (!string.IsNullOrWhiteSpace(success.AccessToken) &&
                     !string.IsNullOrWhiteSpace(success.RefreshToken))
                 {
-                    AppendAuthCookies(Response, success.AccessToken, success.RefreshToken);
+                    AppendAuthCookies(Response, success.RefreshToken);
                 }
 
                 return Ok(success);
@@ -78,7 +68,7 @@ public class AccountController(
                 if (!string.IsNullOrWhiteSpace(success.AccessToken) &&
                     !string.IsNullOrWhiteSpace(success.RefreshToken))
                 {
-                    AppendAuthCookies(Response, success.AccessToken, success.RefreshToken);
+                    AppendAuthCookies(Response, success.RefreshToken);
                 }
 
                 return Ok(success);
@@ -89,8 +79,16 @@ public class AccountController(
     [HttpPost("refresh-token")]
     [Produces<LoginResponse<LoginInfo>>]
     [EndpointSummary("Refresh token")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest? request)
     {
+        request ??= new RefreshTokenRequest();
+
+        if (string.IsNullOrWhiteSpace(request.RefreshToken) &&
+            Request.Cookies.TryGetValue("refreshToken", out var cookieRefreshToken))
+        {
+            request.RefreshToken = cookieRefreshToken;
+        }
+
         var result = await accountService.Refresh(request);
 
         return result.Match(
@@ -99,7 +97,7 @@ public class AccountController(
                 if (!string.IsNullOrWhiteSpace(success.AccessToken) &&
                     !string.IsNullOrWhiteSpace(success.RefreshToken))
                 {
-                    AppendAuthCookies(Response, success.AccessToken, success.RefreshToken);
+                    AppendAuthCookies(Response, success.RefreshToken);
                 }
 
                 return Ok(success);
@@ -110,8 +108,16 @@ public class AccountController(
     [HttpPost("logout")]
     [Produces<OperationResponse<int>>]
     [EndpointSummary("Logout")]
-    public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest? request)
     {
+        request ??= new LogoutRequest();
+
+        if (string.IsNullOrWhiteSpace(request.RefreshToken) &&
+            Request.Cookies.TryGetValue("refreshToken", out var cookieRefreshToken))
+        {
+            request.RefreshToken = cookieRefreshToken;
+        }
+
         var result = await accountService.Logout(request);
 
         return result.Match(
