@@ -102,9 +102,6 @@ public class ExpenseRepository(
                 nameof(ListExpensesResponse.Currency) =>
                     desc ? query.OrderByDescending(x => x.Currency) : query.OrderBy(x => x.Currency),
 
-                nameof(ListExpensesResponse.Status) =>
-                    desc ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
-
                 nameof(ListExpensesResponse.Created) =>
                     desc ? query.OrderByDescending(x => x.Created) : query.OrderBy(x => x.Created),
 
