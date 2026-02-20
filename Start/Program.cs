@@ -63,6 +63,11 @@ builder.Services.AddWebComponentsService(builder.Configuration);
 // Discover controllers from the Web assembly
 builder.Services
     .AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.PropertyNamingPolicy = null;
+        o.JsonSerializerOptions.DictionaryKeyPolicy = null;
+    })
     .AddApplicationPart(typeof(WebConfiguration).Assembly);
 
 // OpenAPI JSON
