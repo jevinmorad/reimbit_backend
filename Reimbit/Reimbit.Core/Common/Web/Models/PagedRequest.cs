@@ -56,18 +56,8 @@ public class PagedRequest
     }
 
     [JsonProperty("sortField")]
-    public string SortField { get; set; }
+    public string? SortField { get; set; }
 
     [JsonProperty("sortOrder")]
-    public string SortOrder
-    {
-        get
-        {
-            return sortOrder;
-        }
-        set
-        {
-            sortOrder = string.IsNullOrWhiteSpace(value) ? null : (sortOrders.Any((string c) => c.Equals(value, StringComparison.InvariantCultureIgnoreCase)) ? value.ToUpperInvariant() : null);
-        }
-    }
+    public string? SortOrder { get; set; }
 }

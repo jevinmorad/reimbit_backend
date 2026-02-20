@@ -87,28 +87,29 @@ public class ExpenseRepository(
     {
         var desc = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase);
 
-        return (sortField ?? string.Empty).Trim() switch
-        {
-            nameof(ListExpensesResponse.CategoryName) =>
-                desc ? query.OrderByDescending(x => x.CategoryName) : query.OrderBy(x => x.CategoryName),
+        return (sortField ?? string.Empty)
+            switch
+            {
+                nameof(ListExpensesResponse.CategoryName) =>
+                    desc ? query.OrderByDescending(x => x.CategoryName) : query.OrderBy(x => x.CategoryName),
 
-            nameof(ListExpensesResponse.Title) =>
-                desc ? query.OrderByDescending(x => x.Title) : query.OrderBy(x => x.Title),
+                nameof(ListExpensesResponse.Title) =>
+                    desc ? query.OrderByDescending(x => x.Title) : query.OrderBy(x => x.Title),
 
-            nameof(ListExpensesResponse.Amount) =>
-                desc ? query.OrderByDescending(x => x.Amount) : query.OrderBy(x => x.Amount),
+                nameof(ListExpensesResponse.Amount) =>
+                    desc ? query.OrderByDescending(x => x.Amount) : query.OrderBy(x => x.Amount),
 
-            nameof(ListExpensesResponse.Currency) =>
-                desc ? query.OrderByDescending(x => x.Currency) : query.OrderBy(x => x.Currency),
+                nameof(ListExpensesResponse.Currency) =>
+                    desc ? query.OrderByDescending(x => x.Currency) : query.OrderBy(x => x.Currency),
 
-            nameof(ListExpensesResponse.Status) =>
-                desc ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
+                nameof(ListExpensesResponse.Status) =>
+                    desc ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
 
-            nameof(ListExpensesResponse.Created) =>
-                desc ? query.OrderByDescending(x => x.Created) : query.OrderBy(x => x.Created),
+                nameof(ListExpensesResponse.Created) =>
+                    desc ? query.OrderByDescending(x => x.Created) : query.OrderBy(x => x.Created),
 
-            _ => query.OrderByDescending(x => x.Created)
-        };
+                _ => query.OrderByDescending(x => x.Created)
+            };
     }
 
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> List(ListExpenseRequest request)
