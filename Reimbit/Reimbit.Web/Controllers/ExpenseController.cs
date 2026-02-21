@@ -37,16 +37,6 @@ public class ExpenseController(
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
-    [HttpGet("organization")]
-    [Produces<PagedResult<ListExpensesResponse>>]
-    [EndpointSummary("Expenses by organization")]
-    [HasPermission(Permission.ExpenseViewAll)]
-    public async Task<IActionResult> ListByOrganization()
-    {
-        var result = await service.ListByOrganization();
-        return result.Match(_ => Ok(result.Value), Problem);
-    }
-
     [HttpPut("Update")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Update expense")]
@@ -56,7 +46,7 @@ public class ExpenseController(
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("Delete/{id}")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Delete expense")]
     public async Task<IActionResult> Delete(EncryptedInt id)

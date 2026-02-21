@@ -114,8 +114,7 @@ public class ExpenseRepository(
         var baseQuery = context.ExpExpenses
             .AsNoTracking()
             .Include(x => x.Category)
-            .Where(x =>
-                (!request.UserID.HasValue || x.EmployeeId == (int)request.UserID.Value))
+            .Where(x => (!request.UserID.HasValue || x.EmployeeId == request.UserID))
             .Select(x => new ListExpensesResponse
             {
                 ExpenseId = x.ExpenseId,
@@ -182,7 +181,7 @@ public class ExpenseRepository(
         {
 
             var expense = await context.ExpExpenses.FirstOrDefaultAsync(x =>
-                x.OrganizationId == request.OrganizationId && x.ExpenseId == (int)request.ExpenseId);
+                x.OrganizationId == request.OrganizationId && x.ExpenseId == request.ExpenseId.Value);
 
             if (expense == null)
             {
@@ -206,7 +205,7 @@ public class ExpenseRepository(
                 expense.Modified
             };
 
-            expense.CategoryId = (int)request.CategoryId;
+            expense.CategoryId = request.CategoryId.Value;
             expense.Title = request.Title;
             expense.Amount = request.Amount;
             expense.Currency = request.Currency ?? "INR";
@@ -259,7 +258,7 @@ public class ExpenseRepository(
 
         try
         {
-            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == expenseId);
+            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == expenseId.Value);
 
             if (expense == null)
             {
@@ -318,7 +317,7 @@ public class ExpenseRepository(
         var expense = await context.ExpExpenses
             .AsNoTracking()
             .Include(x => x.Category)
-            .Where(x => x.ExpenseId == (int)expenseId)
+            .Where(x => x.ExpenseId == expenseId.Value)
             .Select(x => new GetExpenseResponse
             {
                 ExpenseId = x.ExpenseId,
@@ -348,7 +347,7 @@ public class ExpenseRepository(
             .Include(x => x.Category)
             .Include(x => x.Employee)
             .Include(x => x.CreatedByUser)
-            .Where(x => x.ExpenseId == expenseId)
+            .Where(x => x.ExpenseId == expenseId.Value)
             .Select(x => new ViewExpenseResponse
             {
                 Title = x.Title,
@@ -356,12 +355,15 @@ public class ExpenseRepository(
                 Currency = x.Currency,
                 Description = x.Description,
                 AttachmentUrl = x.ReceiptUrl,
-                ExpenseStatus = x.Status.ToString(),
-                RejectionReason = null,
+                ExpenseStatus = ((ExpenseStatus)x.Status).ToString(),
+                RejectionReason = x.ExpExpenseRejections
+                    .OrderByDescending(r => r.RejectedAt)
+                    .Select(r => r.Reason)
+                    .FirstOrDefault(),
                 CategoryName = x.Category.CategoryName,
                 UserDisplayName = x.Employee.DisplayName,
-                CreatedByUserDisplayName = x.Employee.DisplayName,
-                ModifiedByUserDisplayName = x.Employee.DisplayName,
+                CreatedByUserDisplayName = x.CreatedByUser.DisplayName,
+                ModifiedByUserDisplayName = null,
                 Created = x.Created,
                 Modified = x.Modified
             })

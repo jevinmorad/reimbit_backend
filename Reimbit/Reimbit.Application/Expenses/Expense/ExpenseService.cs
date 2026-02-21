@@ -33,8 +33,6 @@ public class ExpenseService(
         return await repository.List(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByUserId(ListExpenseRequest request) =>  await repository.List(request);
-
     public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization()
         => await repository.ListByOrganization(currentUser.OrganizationId);
 
