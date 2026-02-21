@@ -109,7 +109,7 @@ public class ExpenseRepository(
             };
     }
 
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> List(ListExpenseRequest request)
+    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> SelectPaage(ListExpenseRequest request)
     {
         var baseQuery = context.ExpExpenses
             .AsNoTracking()

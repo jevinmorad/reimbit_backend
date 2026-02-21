@@ -31,9 +31,9 @@ public class ExpenseController(
     [HttpPost("SelectPage")]
     [Produces<PagedResult<ListExpensesResponse>>]
     [EndpointSummary("My expenses list")]
-    public async Task<IActionResult> ListExpenses(ListExpenseRequest request)
+    public async Task<IActionResult> SelectPaage(ListExpenseRequest request)
     {
-        var result = await service.ListExpenses(request);
+        var result = await service.SelectPaage(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
