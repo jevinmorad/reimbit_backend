@@ -2,7 +2,7 @@ using AegisInt.Core;
 
 namespace Reimbit.Contracts.ExpenseReports;
 
-public class GetExpenseReportResponse
+public class ExpenseReportSelectPkResponse
 {
     public EncryptedInt ReportId { get; set; }
     public string Title { get; set; }

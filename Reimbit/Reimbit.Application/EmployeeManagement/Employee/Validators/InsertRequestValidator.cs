@@ -3,7 +3,7 @@ using Reimbit.Contracts.Employee;
 
 namespace Reimbit.Application.EmployeeManagement.Employee.Validators;
 
-public class InsertRequestValidator : AbstractValidator<InsertEmployeeRequest>
+public class InsertRequestValidator : AbstractValidator<EmployeeInsertRequest>
 {
     public InsertRequestValidator()
     {

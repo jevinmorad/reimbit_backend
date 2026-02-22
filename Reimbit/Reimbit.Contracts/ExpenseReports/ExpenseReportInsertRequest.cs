@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Reimbit.Contracts.ExpenseReports;
 
-public class CreateExpenseReportRequest
+public class ExpenseReportInsertRequest
 {
     public required DateOnly PeriodStart { get; set; }
     public required DateOnly PeriodEnd { get; set; }

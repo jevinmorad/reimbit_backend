@@ -60,7 +60,7 @@ public class UserRepository(IApplicationDbContext context) : IUserRepository
             user.Modified = request.Modified ?? DateTime.UtcNow;
             user.ModifiedByUserId = request.ModifiedByUserId;
 
-            var rows = await context.SaveChangesAsync(default);
+            var rows = await context.SaveChangesAsync();
             await tx.CommitAsync();
 
             return new OperationResponse<EncryptedInt>

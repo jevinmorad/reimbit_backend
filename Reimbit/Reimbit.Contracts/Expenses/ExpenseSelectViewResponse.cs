@@ -1,6 +1,6 @@
 namespace Reimbit.Contracts.Expenses;
 
-public class ViewExpenseResponse
+public class ExpenseSelectViewResponse
 {
     public required string Title { get; set; }
     public decimal Amount { get; set; }

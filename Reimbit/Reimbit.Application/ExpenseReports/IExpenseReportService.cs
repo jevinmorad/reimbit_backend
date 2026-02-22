@@ -7,9 +7,9 @@ namespace Reimbit.Application.ExpenseReports;
 
 public interface IExpenseReportService
 {
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Create(CreateExpenseReportRequest request);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Create(ExpenseReportInsertRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> AddExpense(AddExpenseToReportRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> RemoveExpense(RemoveExpenseFromReportRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Submit(SubmitExpenseReportRequest request);
-    Task<ErrorOr<GetExpenseReportResponse>> Get(EncryptedInt reportId);
+    Task<ErrorOr<ExpenseReportSelectPkResponse>> Get(EncryptedInt reportId);
 }

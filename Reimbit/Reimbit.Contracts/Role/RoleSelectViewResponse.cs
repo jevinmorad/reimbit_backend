@@ -2,7 +2,7 @@ using AegisInt.Core;
 
 namespace Reimbit.Contracts.Role;
 
-public class ViewRoleResponse
+public class RoleSelectViewResponse
 {
     public required string RoleName { get; set; }
     public string? Description { get; set; }

@@ -22,7 +22,7 @@ public class RoleController(
     [HttpPost]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create role")]
-    public async Task<IActionResult> Insert([FromBody] InsertRoleRequest request)
+    public async Task<IActionResult> Insert([FromBody] RoleInsertRequest request)
     {
         var result = await roleService.Insert(request);
         return result.Match(_ => Ok(result.Value), Problem);
@@ -31,7 +31,7 @@ public class RoleController(
     [HttpPut]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Update role")]
-    public async Task<IActionResult> Update(UpdateRoleRequest request)
+    public async Task<IActionResult> Update(RoleUpdateRequest request)
     {
         var result = await roleService.Update(request);
         return result.Match(_ => Ok(result.Value), Problem);
@@ -47,7 +47,7 @@ public class RoleController(
     }
 
     [HttpGet("{roleId}")]
-    [Produces<OperationResponse<GetRoleResponse>>]
+    [Produces<OperationResponse<RoleSelectPKResponse>>]
     [EndpointSummary("Gel role")]
     public async Task<IActionResult> Get(EncryptedInt roleId)
     {
@@ -56,7 +56,7 @@ public class RoleController(
     }
 
     [HttpGet("view/{roleId}")]
-    [Produces<ViewRoleResponse>]
+    [Produces<RoleSelectViewResponse>]
     [EndpointSummary("View role detil")]
     public async Task<IActionResult> View(EncryptedInt roleId)
     {
@@ -65,7 +65,7 @@ public class RoleController(
     }
 
     [HttpGet]
-    [Produces<PagedResult<ListRoleResponse>>]
+    [Produces<PagedResult<RoleSelectPaegResponse>>]
     [EndpointSummary("List roles")]
     public async Task<IActionResult> List()
     {

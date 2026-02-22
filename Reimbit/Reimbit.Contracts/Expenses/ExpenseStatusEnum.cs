@@ -1,6 +1,6 @@
 namespace Reimbit.Contracts.Expenses;
 
-public enum ExpenseStatus : byte
+public enum ExpenseStatusEnum : byte
 {
     Draft = 1,
     Submitted = 2,

@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Role;
 
-public class InsertRoleRequest
+public class RoleInsertRequest
 {
     public required string RoleName { get; set; }
     public string? Description { get; set; }

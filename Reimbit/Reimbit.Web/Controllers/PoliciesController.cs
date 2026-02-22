@@ -20,14 +20,14 @@ public class PoliciesController(
     [HttpPost]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create policy")]
-    public async Task<IActionResult> Insert([FromBody] InsertPolicyRequest request)
+    public async Task<IActionResult> Insert([FromBody] PolicyInsertRequest request)
     {
         var result = await service.Insert(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
     [HttpGet("list/{categoryId}")]
-    [Produces<PagedResult<ListPoliciesResponse>>]
+    [Produces<PagedResult<PoliciesSelectPageResponse>>]
     [EndpointSummary("List policies by category")]
     public async Task<IActionResult> List([FromRoute] EncryptedInt categoryId)
     {
@@ -38,7 +38,7 @@ public class PoliciesController(
     [HttpPut]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Update policy")]
-    public async Task<IActionResult> Update([FromBody] UpdatePolicyRequest request)
+    public async Task<IActionResult> Update([FromBody] PolicyUpdateRequest request)
     {
         var result = await service.Update(request);
         return result.Match(_ => Ok(result.Value), Problem);
@@ -54,7 +54,7 @@ public class PoliciesController(
     }
 
     [HttpGet("{id}")]
-    [Produces<GetPolicyResponse>]
+    [Produces<PolicySelectPKResponse>]
     [EndpointSummary("Get policy")]
     public async Task<IActionResult> Get(EncryptedInt id)
     {

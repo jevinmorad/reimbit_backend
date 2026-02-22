@@ -15,7 +15,7 @@ public class ExpenseService(
 {
     private readonly CurrentUser<TokenData> currentUser = currentUserProvider.GetCurrentUser<TokenData>();
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(ExpenseInsertRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.UserId = currentUser.UserId;
@@ -27,17 +27,16 @@ public class ExpenseService(
         return await repository.Insert(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> SelectPaage(ListExpenseRequest request)
+    public async Task<ErrorOr<PagedResult<ExpensesSelectPageResponse>>> SelectPage(ExpenseSelectPageRequest request)
     {
         request.UserID = currentUser.UserId;
-        return await repository.SelectPaage(request);
+        return await repository.SelectPage(request);
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(ExpenseUpdateRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.ModifiedByUserId = currentUser.UserId;
-        request.Modified = DateTime.UtcNow;
 
         return await repository.Update(request);
     }
@@ -45,9 +44,9 @@ public class ExpenseService(
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt expenseId)
         => await repository.Delete(expenseId);
 
-    public async Task<ErrorOr<GetExpenseResponse>> Get(EncryptedInt expenseId)
+    public async Task<ErrorOr<ExpenseSelectPkResponse>> Get(EncryptedInt expenseId)
         => await repository.Get(expenseId);
 
-    public async Task<ErrorOr<ViewExpenseResponse>> View(EncryptedInt expenseId)
+    public async Task<ErrorOr<ExpenseSelectViewResponse>> View(EncryptedInt expenseId)
         => await repository.View(expenseId);
 }

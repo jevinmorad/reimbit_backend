@@ -18,10 +18,10 @@ public class RoleService(
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt RoleID)
         => await repository.Delete(RoleID);
 
-    public async Task<ErrorOr<GetRoleResponse>> Get(EncryptedInt RoleID)
+    public async Task<ErrorOr<RoleSelectPKResponse>> Get(EncryptedInt RoleID)
         => await repository.Get(RoleID);
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRoleRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(RoleInsertRequest request)
     {
         request.OrganizationID = currentUser.OrganizationId;
         request.CreatedByUserID = currentUser.UserId;
@@ -30,20 +30,20 @@ public class RoleService(
         return await repository.Insert(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListRoleResponse>>> List()
+    public async Task<ErrorOr<PagedResult<RoleSelectPaegResponse>>> List()
         => await repository.List(currentUser.OrganizationId);
 
     public Task<ErrorOr<IReadOnlyList<OptionsResponse<EncryptedInt>>>> Options()
         => throw new NotImplementedException();
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRoleRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(RoleUpdateRequest request)
     {
         request.ModifiedByUserID = currentUser.UserId;
         request.Modified = DateTime.UtcNow;
         return await repository.Update(request);
     }
 
-    public async Task<ErrorOr<ViewRoleResponse>> View(EncryptedInt RoleID)
+    public async Task<ErrorOr<RoleSelectViewResponse>> View(EncryptedInt RoleID)
         => await repository.View(RoleID);
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> AssignRoleToUser(UserRoleAssignmentRequest request)

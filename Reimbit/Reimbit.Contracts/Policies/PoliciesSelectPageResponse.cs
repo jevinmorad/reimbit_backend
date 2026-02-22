@@ -2,11 +2,13 @@
 
 namespace Reimbit.Contracts.Policies;
 
-public class GetPolicyResponse
+public class PoliciesSelectPageResponse
 {
     public EncryptedInt PolicyId { get; set; }
     public EncryptedInt? CategoryId { get; set; }
+    public string? CategoryName { get; set; }
     public decimal? MaxAmount { get; set; }
     public bool IsReceiptMandatory { get; set; }
     public string? Description { get; set; }
+    public DateTime? Created { get; set; }
 }

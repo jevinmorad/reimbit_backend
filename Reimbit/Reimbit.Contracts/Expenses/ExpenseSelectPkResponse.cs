@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Expenses;
 
-public class GetExpenseResponse
+public class ExpenseSelectPkResponse
 {
     public EncryptedInt ExpenseId { get; set; }
     public EncryptedInt CategoryId { get; set; }

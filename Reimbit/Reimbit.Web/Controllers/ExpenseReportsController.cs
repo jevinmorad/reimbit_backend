@@ -20,7 +20,7 @@ public sealed class ExpenseReportsController(
     [HttpPost]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create expense report")]
-    public async Task<IActionResult> Create([FromBody] CreateExpenseReportRequest request)
+    public async Task<IActionResult> Create([FromBody] ExpenseReportInsertRequest request)
     {
         var result = await service.Create(request);
         return result.Match(_ => Ok(result.Value), Problem);
@@ -54,7 +54,7 @@ public sealed class ExpenseReportsController(
     }
 
     [HttpGet("{reportId}")]
-    [Produces<GetExpenseReportResponse>]
+    [Produces<ExpenseReportSelectPkResponse>]
     [EndpointSummary("Get report")]
     public async Task<IActionResult> Get([FromRoute] EncryptedInt reportId)
     {

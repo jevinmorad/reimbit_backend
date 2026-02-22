@@ -33,6 +33,6 @@ public sealed class DbAuditLogger(IApplicationDbContext context) : IAuditLogger
         };
 
         context.SysAuditLogs.Add(row);
-        await context.SaveChangesAsync(default);
+        await context.SaveChangesAsync();
     }
 }

@@ -3,7 +3,7 @@ using Reimbit.Contracts.Expenses;
 
 namespace Reimbit.Application.Expenses.Expense.Validators;
 
-public class UpdateRequestValidator : AbstractValidator<UpdateExpenseRequest>
+public class UpdateRequestValidator : AbstractValidator<ExpenseUpdateRequest>
 {
     public UpdateRequestValidator()
     {

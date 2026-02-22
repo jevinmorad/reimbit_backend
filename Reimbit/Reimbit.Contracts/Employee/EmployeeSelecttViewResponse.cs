@@ -1,6 +1,6 @@
 ﻿namespace Reimbit.Contracts.Employee;
 
-public class ViewEmployeeResponse
+public class EmployeeSelecttViewResponse
 {
     public required string Name { get; set; }
     public string? Role { get; set; }

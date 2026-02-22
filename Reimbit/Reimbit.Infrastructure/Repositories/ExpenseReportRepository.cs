@@ -17,7 +17,7 @@ public sealed class ExpenseReportRepository(
     IDelegationRepository delegationRepository
 ) : IExpenseReportRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Create(CreateExpenseReportRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Create(ExpenseReportInsertRequest request)
     {
         var dbContext = (DbContext)context;
         await using var tx = await dbContext.Database.BeginTransactionAsync();
@@ -30,7 +30,7 @@ public sealed class ExpenseReportRepository(
                 PeriodStart = request.PeriodStart,
                 PeriodEnd = request.PeriodEnd,
                 Title = request.Title,
-                Status = (byte)ExpenseReportStatus.Open,
+                Status = (byte)ExpenseReportStatusEnum.Open,
                 TotalAmount = 0,
                 ViewedAt = null,
                 CreatedByUserId = request.CreatedByUserId,
@@ -40,7 +40,7 @@ public sealed class ExpenseReportRepository(
             };
 
             await context.ExpExpenseReports.AddAsync(report);
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "EXP_ExpenseReport",
@@ -97,7 +97,7 @@ public sealed class ExpenseReportRepository(
                 return Error.Unauthorized("ExpenseReport.AccessDenied", "Only the report owner can modify the report.");
             }
 
-            if (report.Status != (byte)ExpenseReportStatus.Open)
+            if (report.Status != (byte)ExpenseReportStatusEnum.Open)
             {
                 return Error.Validation("ExpenseReport.NotEditable", "Only open reports can be modified.");
             }
@@ -116,7 +116,7 @@ public sealed class ExpenseReportRepository(
                 return Error.Unauthorized("Expense.AccessDenied", "Only the expense owner can attach it to a report.");
             }
 
-            if (expense.Status != (byte)ExpenseStatus.Draft)
+            if (expense.Status != (byte)ExpenseStatusEnum.Draft)
             {
                 return Error.Validation("Expense.NotAttachable", "Only draft expenses can be added to a report.");
             }
@@ -140,7 +140,7 @@ public sealed class ExpenseReportRepository(
             report.ModifiedByUserId = request.UserId;
             report.Modified = DateTime.UtcNow;
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "EXP_ReportExpense",
@@ -188,7 +188,7 @@ public sealed class ExpenseReportRepository(
                 return Error.Unauthorized("ExpenseReport.AccessDenied", "Only the report owner can modify the report.");
             }
 
-            if (report.Status != (byte)ExpenseReportStatus.Open)
+            if (report.Status != (byte)ExpenseReportStatusEnum.Open)
             {
                 return Error.Validation("ExpenseReport.NotEditable", "Only open reports can be modified.");
             }
@@ -222,7 +222,7 @@ public sealed class ExpenseReportRepository(
             report.ModifiedByUserId = request.UserId;
             report.Modified = DateTime.UtcNow;
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "EXP_ReportExpense",
@@ -269,7 +269,7 @@ public sealed class ExpenseReportRepository(
                 return Error.Unauthorized("ExpenseReport.AccessDenied", "Only the report owner can submit the report.");
             }
 
-            if (report.Status != (byte)ExpenseReportStatus.Open)
+            if (report.Status != (byte)ExpenseReportStatusEnum.Open)
             {
                 return Error.Validation("ExpenseReport.NotSubmittable", "Only open reports can be submitted.");
             }
@@ -293,13 +293,13 @@ public sealed class ExpenseReportRepository(
                 return Error.Validation("ExpenseReport.InvalidExpenseOwner", "Report contains expenses not owned by the submitter.");
             }
 
-            if (expenses.Any(e => e.Status != (byte)ExpenseStatus.Draft))
+            if (expenses.Any(e => e.Status != (byte)ExpenseStatusEnum.Draft))
             {
                 return Error.Validation("ExpenseReport.InvalidExpenseState", "All expenses must be draft to submit.");
             }
 
             report.TotalAmount = expenses.Sum(e => e.Amount);
-            report.Status = (byte)ExpenseReportStatus.Submitted;
+            report.Status = (byte)ExpenseReportStatusEnum.Submitted;
             report.ModifiedByUserId = request.UserId;
             report.Modified = DateTime.UtcNow;
 
@@ -336,7 +336,7 @@ public sealed class ExpenseReportRepository(
             if (existingInstances.Count > 0)
             {
                 context.AprApprovalInstances.RemoveRange(existingInstances);
-                await context.SaveChangesAsync(default);
+                await context.SaveChangesAsync();
             }
 
             await auditLogger.WriteAsync(
@@ -408,11 +408,11 @@ public sealed class ExpenseReportRepository(
                 });
             }
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             foreach (var exp in expenses)
             {
-                exp.Status = (byte)ExpenseStatus.UnderApproval;
+                exp.Status = (byte)ExpenseStatusEnum.UnderApproval;
                 exp.Modified = DateTime.UtcNow;
 
                 await auditLogger.WriteAsync(
@@ -421,7 +421,7 @@ public sealed class ExpenseReportRepository(
                     action: "EXPENSE_SUBMITTED",
                     organizationId: request.OrganizationId,
                     userId: request.UserId,
-                    oldValue: new { Status = (byte)ExpenseStatus.Draft },
+                    oldValue: new { Status = (byte)ExpenseStatusEnum.Draft },
                     newValue: new { Status = exp.Status, ReportId = reportId },
                     ipAddress: null,
                     userAgent: null);
@@ -438,14 +438,14 @@ public sealed class ExpenseReportRepository(
         }
     }
 
-    public async Task<ErrorOr<GetExpenseReportResponse>> Get(EncryptedInt reportId, int organizationId)
+    public async Task<ErrorOr<ExpenseReportSelectPkResponse>> Get(EncryptedInt reportId, int organizationId)
     {
         var id = (int)reportId;
 
         var report = await context.ExpExpenseReports
             .AsNoTracking()
             .Where(r => r.ReportId == id && r.OrganizationId == organizationId)
-            .Select(r => new GetExpenseReportResponse
+            .Select(r => new ExpenseReportSelectPkResponse
             {
                 ReportId = r.ReportId,
                 Title = r.Title,

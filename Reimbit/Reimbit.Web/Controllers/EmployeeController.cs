@@ -22,7 +22,7 @@ public class EmployeeController(
     [HttpPost]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Insert")]
-    public async Task<IActionResult> Insert([FromBody] InsertEmployeeRequest request)
+    public async Task<IActionResult> Insert([FromBody] EmployeeInsertRequest request)
     {
         var result = await employeeService.Insert(request);
 
@@ -40,7 +40,7 @@ public class EmployeeController(
     }
 
     [HttpGet("{userId}")]
-    [Produces<ViewEmployeeResponse>]
+    [Produces<EmployeeSelecttViewResponse>]
     [EndpointSummary("View employee details")]
     public async Task<IActionResult> View(EncryptedInt userId)
     {
@@ -50,7 +50,7 @@ public class EmployeeController(
     }
 
     [HttpGet]
-    [Produces<PagedResult<ListEmployeeResponse>>]
+    [Produces<PagedResult<EmployeeSelectPageResponse>>]
     [EndpointSummary("List all employees")]
     public async Task<IActionResult> List()
     {

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Reimbit.Contracts.Policies;
 
-public class InsertPolicyRequest
+public class PolicyInsertRequest
 {
     public required EncryptedInt CategoryId { get; set; }
     public decimal? MaxAmount { get; set; }

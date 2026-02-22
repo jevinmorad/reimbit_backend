@@ -20,7 +20,7 @@ public class EmployeeService(
         throw new NotImplementedException();
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(EmployeeInsertRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
@@ -30,7 +30,7 @@ public class EmployeeService(
         return result;
     }
 
-    public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List() => await repository.List(currentUser.OrganizationId);
+    public async Task<ErrorOr<PagedResult<EmployeeSelectPageResponse>>> List() => await repository.List(currentUser.OrganizationId);
 
-    public async Task<ErrorOr<ViewEmployeeResponse>> View(EncryptedInt userId) => await repository.View(userId);
+    public async Task<ErrorOr<EmployeeSelecttViewResponse>> View(EncryptedInt userId) => await repository.View(userId);
 }

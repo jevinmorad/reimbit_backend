@@ -79,7 +79,7 @@ public class AccountRepository(
         user.SecUserAuth.IsRevoked = false;
         user.SecUserAuth.LastLogin = DateTime.UtcNow;
 
-        await context.SaveChangesAsync(default);
+        await context.SaveChangesAsync();
 
         await auditLogger.WriteAsync(
             entityType: "SEC_UserAuth",
@@ -182,7 +182,7 @@ public class AccountRepository(
         auth.RefreshTokenExpiry = request.CurrentDate.AddDays(7);
         auth.IsRevoked = false;
 
-        await context.SaveChangesAsync(default);
+        await context.SaveChangesAsync();
 
         await auditLogger.WriteAsync(
             entityType: "SEC_UserAuth",
@@ -233,7 +233,7 @@ public class AccountRepository(
         auth.IsRevoked = true;
         auth.RefreshTokenExpiry = request.CurrentDate;
 
-        var rows = await context.SaveChangesAsync(default);
+        var rows = await context.SaveChangesAsync();
 
         await auditLogger.WriteAsync(
             entityType: "SEC_UserAuth",
@@ -292,7 +292,7 @@ public class AccountRepository(
             };
 
             await context.OrgOrganizations.AddAsync(org);
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             var user = new SecUser
             {
@@ -308,7 +308,7 @@ public class AccountRepository(
             };
 
             await context.SecUsers.AddAsync(user);
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             var adminRole = new SecRole
             {
@@ -322,7 +322,7 @@ public class AccountRepository(
             };
 
             await context.SecRoles.AddAsync(adminRole);
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             var allPermissions = Enum.GetValues(typeof(Permission)).Cast<int>();
             foreach (var permValue in allPermissions)
@@ -336,7 +336,7 @@ public class AccountRepository(
                 };
                 await context.SecRoleClaims.AddAsync(roleClaim);
             }
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             var userRole = new SecUserRole
             {
@@ -362,7 +362,7 @@ public class AccountRepository(
 
             await context.SecUserAuths.AddAsync(auth);
 
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
             await tx.CommitAsync();
 
             await auditLogger.WriteAsync(

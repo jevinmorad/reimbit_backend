@@ -8,11 +8,11 @@ namespace Reimbit.Application.EmployeeManagement.Role;
 public interface IRoleService
 {
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt RoleID);
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRoleRequest request);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(RoleInsertRequest request);
     Task<ErrorOr<IReadOnlyList<OptionsResponse<EncryptedInt>>>> Options();
-    Task<ErrorOr<PagedResult<ListRoleResponse>>> List();
-    Task<ErrorOr<GetRoleResponse>> Get(EncryptedInt RoleID);
-    Task<ErrorOr<ViewRoleResponse>> View(EncryptedInt RoleID);
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRoleRequest request);
+    Task<ErrorOr<PagedResult<RoleSelectPaegResponse>>> List();
+    Task<ErrorOr<RoleSelectPKResponse>> Get(EncryptedInt RoleID);
+    Task<ErrorOr<RoleSelectViewResponse>> View(EncryptedInt RoleID);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(RoleUpdateRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> AssignRoleToUser(UserRoleAssignmentRequest request);
 }

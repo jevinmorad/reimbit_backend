@@ -3,7 +3,7 @@ using Reimbit.Contracts.Role;
 
 namespace Reimbit.Application.EmployeeManagement.Role.Validators;
 
-public sealed class InsertRoleRequestValidator : AbstractValidator<InsertRoleRequest>
+public sealed class InsertRoleRequestValidator : AbstractValidator<RoleInsertRequest>
 {
     public InsertRoleRequestValidator()
     {

@@ -152,7 +152,7 @@ public sealed class DelegationRepository(
             };
 
             await context.SecDelegateApprovers.AddAsync(entity);
-            var rows = await context.SaveChangesAsync(default);
+            var rows = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "SEC_DelegateApprover",
@@ -223,7 +223,7 @@ public sealed class DelegationRepository(
             // Auto-expire style: set ValidTo to now
             entity.ValidTo = DateTime.UtcNow;
 
-            var rows = await context.SaveChangesAsync(default);
+            var rows = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "SEC_DelegateApprover",

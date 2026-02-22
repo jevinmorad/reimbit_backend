@@ -2,7 +2,7 @@
 
 namespace Reimbit.Contracts.Role;
 
-public class ListRoleResponse
+public class RoleSelectPaegResponse
 {
     public required EncryptedInt RoleID { get; set; }
     public required string RoleName { get; set; }

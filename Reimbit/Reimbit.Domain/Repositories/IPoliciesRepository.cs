@@ -7,9 +7,9 @@ namespace Reimbit.Domain.Repositories;
 
 public interface IPoliciesRepository
 {
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertPolicyRequest request);
-    Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt categoryId);
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdatePolicyRequest request);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(PolicyInsertRequest request);
+    Task<ErrorOr<PagedResult<PoliciesSelectPageResponse>>> List(EncryptedInt categoryId);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(PolicyUpdateRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt policyId);
-    Task<ErrorOr<GetPolicyResponse>> Get(EncryptedInt policyId);
+    Task<ErrorOr<PolicySelectPKResponse>> Get(EncryptedInt policyId);
 }

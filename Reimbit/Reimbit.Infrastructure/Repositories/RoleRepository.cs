@@ -11,7 +11,7 @@ namespace Reimbit.Infrastructure.Repositories;
 
 public class RoleRepository(IApplicationDbContext context) : IRoleRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertRoleRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(RoleInsertRequest request)
     {
         var db = (DbContext)context;
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -48,7 +48,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
             };
 
             await context.SecRoles.AddAsync(role);
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             if (request.PermissionValues != null && request.PermissionValues.Count > 0)
             {
@@ -63,7 +63,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
                     };
                     await context.SecRoleClaims.AddAsync(rc);
                 }
-                await context.SaveChangesAsync(default);
+                await context.SaveChangesAsync();
             }
 
             if (request.Assignments != null && request.Assignments.Count > 0)
@@ -80,7 +80,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
 
                     await context.SecUserRoles.AddAsync(assignment);
                 }
-                await context.SaveChangesAsync(default);
+                await context.SaveChangesAsync();
             }
 
             await tx.CommitAsync();
@@ -98,7 +98,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
         }
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateRoleRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(RoleUpdateRequest request)
     {
         var db = (DbContext)context;
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -148,7 +148,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
                 }
             }
 
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
             await tx.CommitAsync();
 
             return new OperationResponse<EncryptedInt>
@@ -190,7 +190,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
                 // Soft delete
                 role.IsActive = false;
                 role.Modified = now;
-                await context.SaveChangesAsync(default);
+                await context.SaveChangesAsync();
             }
             else
             {
@@ -202,7 +202,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
                 context.SecUserRoles.RemoveRange(assignments);
 
                 context.SecRoles.Remove(role);
-                await context.SaveChangesAsync(default);
+                await context.SaveChangesAsync();
             }
 
             await tx.CommitAsync();
@@ -220,12 +220,12 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
         }
     }
 
-    public async Task<ErrorOr<GetRoleResponse>> Get(EncryptedInt roleId)
+    public async Task<ErrorOr<RoleSelectPKResponse>> Get(EncryptedInt roleId)
     {
         var role = await context.SecRoles
             .AsNoTracking()
             .Where(r => r.RoleId == (int)roleId)
-            .Select(r => new GetRoleResponse
+            .Select(r => new RoleSelectPKResponse
             {
                 RoleID = r.RoleId,
                 RoleName = r.RoleName,
@@ -241,14 +241,14 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
         return role;
     }
 
-    public async Task<ErrorOr<ViewRoleResponse>> View(EncryptedInt roleId)
+    public async Task<ErrorOr<RoleSelectViewResponse>> View(EncryptedInt roleId)
     {
         var role = await context.SecRoles
             .AsNoTracking()
             .Include(r => r.CreatedByUser)
             .Include(r => r.ModifiedByUser)
             .Where(r => r.RoleId == (int)roleId)
-            .Select(r => new ViewRoleResponse
+            .Select(r => new RoleSelectViewResponse
             {
                 RoleName = r.RoleName,
                 Description = r.Description,
@@ -270,13 +270,13 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
         return role;
     }
 
-    public async Task<ErrorOr<PagedResult<ListRoleResponse>>> List(int organizationId)
+    public async Task<ErrorOr<PagedResult<RoleSelectPaegResponse>>> List(int organizationId)
     {
         var roles = await context.SecRoles
             .AsNoTracking()
             .Where(r => r.OrganizationId == organizationId)
             .OrderBy(r => r.RoleName)
-            .Select(r => new ListRoleResponse
+            .Select(r => new RoleSelectPaegResponse
             {
                 RoleID = r.RoleId,
                 RoleName = r.RoleName,
@@ -286,7 +286,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
             })
             .ToListAsync();
 
-        return new PagedResult<ListRoleResponse>
+        return new PagedResult<RoleSelectPaegResponse>
         {
             Data = roles,
             Total = roles.Count
@@ -337,7 +337,7 @@ public class RoleRepository(IApplicationDbContext context) : IRoleRepository
             };
 
             await context.SecUserRoles.AddAsync(newAssignment);
-            var rows = await context.SaveChangesAsync(default);
+            var rows = await context.SaveChangesAsync();
             await tx.CommitAsync();
 
             return new OperationResponse<EncryptedInt>

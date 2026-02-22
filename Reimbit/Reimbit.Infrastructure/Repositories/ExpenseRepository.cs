@@ -7,6 +7,7 @@ using Reimbit.Contracts.Expenses;
 using Reimbit.Domain.Interfaces;
 using Reimbit.Domain.Models;
 using Reimbit.Domain.Repositories;
+using Reimbit.Infrastructure.Extensions;
 
 namespace Reimbit.Infrastructure.Repositories;
 
@@ -15,7 +16,7 @@ public class ExpenseRepository(
     IAuditLogger auditLogger
 ) : IExpenseRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(ExpenseInsertRequest request)
     {
         var response = new OperationResponse<EncryptedInt>();
         var dbContext = (DbContext)context;
@@ -34,14 +35,14 @@ public class ExpenseRepository(
                 Currency = request.Currency ?? "INR",
                 ReceiptUrl = request.ReceiptUrl ?? string.Empty,
                 Description = request.Description,
-                Status = (byte)ExpenseStatus.Draft,
+                Status = (byte)ExpenseStatusEnum.Draft,
                 CreatedByUserId = request.CreatedByUserId,
                 Created = request.Created,
                 Modified = request.Modified
             };
 
             await context.ExpExpenses.AddAsync(expense);
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "EXP_Expense",
@@ -80,42 +81,26 @@ public class ExpenseRepository(
         }
     }
 
-    private static IQueryable<ListExpensesResponse> ApplySorting(
-        IQueryable<ListExpensesResponse> query,
-        string? sortField,
-        string? sortOrder)
+    public async Task<ErrorOr<PagedResult<ExpensesSelectPageResponse>>> SelectPage(ExpenseSelectPageRequest request)
     {
-        var desc = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase);
+        var query = context.ExpExpenses.AsNoTracking();
 
-        return (sortField ?? string.Empty)
-            switch
-            {
-                nameof(ListExpensesResponse.CategoryName) =>
-                    desc ? query.OrderByDescending(x => x.CategoryName) : query.OrderBy(x => x.CategoryName),
+        if (request.UserID.HasValue)
+            query = query.Where(x => x.EmployeeId == request.UserID);
 
-                nameof(ListExpensesResponse.Title) =>
-                    desc ? query.OrderByDescending(x => x.Title) : query.OrderBy(x => x.Title),
+        if (!string.IsNullOrWhiteSpace(request.Title))
+            query = query.Where(x => x.Title.Contains(request.Title));
 
-                nameof(ListExpensesResponse.Amount) =>
-                    desc ? query.OrderByDescending(x => x.Amount) : query.OrderBy(x => x.Amount),
+        if (request.FromDate.HasValue)
+            query = query.Where(x => x.Created >= request.FromDate.Value);
 
-                nameof(ListExpensesResponse.Currency) =>
-                    desc ? query.OrderByDescending(x => x.Currency) : query.OrderBy(x => x.Currency),
+        if (request.ToDate.HasValue)
+            query = query.Where(x => x.Created <= request.ToDate.Value);
 
-                nameof(ListExpensesResponse.Created) =>
-                    desc ? query.OrderByDescending(x => x.Created) : query.OrderBy(x => x.Created),
+        var total = await query.CountAsync();
 
-                _ => query.OrderByDescending(x => x.Created)
-            };
-    }
-
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> SelectPaage(ListExpenseRequest request)
-    {
-        var baseQuery = context.ExpExpenses
-            .AsNoTracking()
-            .Include(x => x.Category)
-            .Where(x => (!request.UserID.HasValue || x.EmployeeId == request.UserID))
-            .Select(x => new ListExpensesResponse
+        var data = await query
+            .Select(x => new ExpensesSelectPageResponse
             {
                 ExpenseId = x.ExpenseId,
                 CategoryId = x.CategoryId,
@@ -123,97 +108,50 @@ public class ExpenseRepository(
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
-                Status = ((ExpenseStatus)x.Status).ToString(),
+                Status = ((ExpenseStatusEnum)x.Status).ToString(),
                 Created = x.Created
-            });
-
-        var total = await baseQuery.CountAsync();
-
-        var query = ApplySorting(baseQuery, request.SortField, request.SortOrder);
-
-        var data = await query
+            })
+            .ApplySorting(
+                request.SortField,
+                request.SortOrder,
+                defaultField: nameof(ExpensesSelectPageResponse.Created)
+            )
             .Skip(request.PageOffset)
             .Take(request.PageSize)
             .ToListAsync();
 
-        return new PagedResult<ListExpensesResponse>
+        return new PagedResult<ExpensesSelectPageResponse>
         {
             Data = data,
             Total = total
         };
     }
-
-    public async Task<ErrorOr<PagedResult<ListExpensesResponse>>> ListByOrganization(int organizationId)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(ExpenseUpdateRequest request)
     {
-        var query = context.ExpExpenses
-            .AsNoTracking()
-            .Include(x => x.Category)
-            .Where(x => x.OrganizationId == organizationId)
-            .Select(x => new ListExpensesResponse
-            {
-                ExpenseId = x.ExpenseId,
-                CategoryId = x.CategoryId,
-                CategoryName = x.Category.CategoryName,
-                Title = x.Title,
-                Amount = x.Amount,
-                Currency = x.Currency,
-                Status = ((ExpenseStatus)x.Status).ToString(),
-                Created = x.Created
-            });
+        var expense = await context.ExpExpenses.FirstOrDefaultAsync(x =>
+            x.OrganizationId == request.OrganizationId && x.ExpenseId == request.ExpenseId.Value);
 
-        var data = await query.ToListAsync();
+        if (expense == null) return Error.NotFound("Expense.NotFound", "Expense not found");
 
-        return new PagedResult<ListExpensesResponse>
+        if (expense.Status != (byte)ExpenseStatusEnum.Draft && expense.Status != (byte)ExpenseStatusEnum.Rejected)
         {
-            Data = data,
-            Total = data.Count
-        };
-    }
+            return Error.Validation("Expense.Update.NotAllowed", "Only draft/rejected expenses can be updated.");
+        }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseRequest request)
-    {
-        var response = new OperationResponse<EncryptedInt>();
-        var dbContext = (DbContext)context;
+        var oldValue = new { expense.CategoryId, expense.Title, expense.Amount, expense.Currency, expense.ReceiptUrl, expense.Description, expense.Status, expense.Modified };
 
-        await using var tx = await dbContext.Database.BeginTransactionAsync();
+        expense.CategoryId = request.CategoryId.Value;
+        expense.Title = request.Title;
+        expense.Amount = request.Amount;
+        expense.Currency = request.Currency ?? "INR";
+        expense.ReceiptUrl = request.ReceiptUrl ?? string.Empty;
+        expense.Description = request.Description;
+        expense.Modified = DateTime.UtcNow;
 
+        await using var tx = await ((DbContext)context).Database.BeginTransactionAsync();
         try
         {
-
-            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x =>
-                x.OrganizationId == request.OrganizationId && x.ExpenseId == request.ExpenseId.Value);
-
-            if (expense == null)
-            {
-                return Error.NotFound("Expense.NotFound", "Expense not found");
-            }
-
-            if (expense.Status != (byte)ExpenseStatus.Draft && expense.Status != (byte)ExpenseStatus.Rejected)
-            {
-                return Error.Validation("Expense.Update.NotAllowed", "Only draft/rejected expenses can be updated.");
-            }
-
-            var oldValue = new
-            {
-                expense.CategoryId,
-                expense.Title,
-                expense.Amount,
-                expense.Currency,
-                expense.ReceiptUrl,
-                expense.Description,
-                expense.Status,
-                expense.Modified
-            };
-
-            expense.CategoryId = request.CategoryId.Value;
-            expense.Title = request.Title;
-            expense.Amount = request.Amount;
-            expense.Currency = request.Currency ?? "INR";
-            expense.ReceiptUrl = request.ReceiptUrl ?? string.Empty;
-            expense.Description = request.Description;
-            expense.Modified = request.Modified;
-
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "EXP_Expense",
@@ -222,25 +160,11 @@ public class ExpenseRepository(
                 organizationId: expense.OrganizationId,
                 userId: request.ModifiedByUserId,
                 oldValue: oldValue,
-                newValue: new
-                {
-                    expense.CategoryId,
-                    expense.Title,
-                    expense.Amount,
-                    expense.Currency,
-                    expense.ReceiptUrl,
-                    expense.Description,
-                    expense.Status,
-                    expense.Modified
-                },
-                ipAddress: null,
-                userAgent: null);
+                newValue: new { expense.CategoryId, expense.Title, expense.Amount, expense.Currency, expense.ReceiptUrl, expense.Description, expense.Status, expense.Modified },
+                ipAddress: null, userAgent: null);
 
             await tx.CommitAsync();
-
-            response.Id = expense.ExpenseId;
-            response.RowsAffected = rowsAffected;
-            return response;
+            return new OperationResponse<EncryptedInt> { Id = expense.ExpenseId, RowsAffected = rowsAffected };
         }
         catch (Exception ex)
         {
@@ -251,28 +175,20 @@ public class ExpenseRepository(
 
     public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt expenseId)
     {
-        var response = new OperationResponse<EncryptedInt>();
-        var dbContext = (DbContext)context;
+        var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == expenseId.Value);
 
-        await using var tx = await dbContext.Database.BeginTransactionAsync();
+        if (expense == null) return Error.NotFound("Expense.NotFound", "Expense not found");
 
+        if (expense.Status != (byte)ExpenseStatusEnum.Draft)
+        {
+            return Error.Validation("Expense.Delete.NotAllowed", "Only draft expenses can be deleted.");
+        }
+
+        await using var tx = await ((DbContext)context).Database.BeginTransactionAsync();
         try
         {
-            var expense = await context.ExpExpenses.FirstOrDefaultAsync(x => x.ExpenseId == expenseId.Value);
-
-            if (expense == null)
-            {
-                return Error.NotFound("Expense.NotFound", "Expense not found");
-            }
-
-            if (expense.Status != (byte)ExpenseStatus.Draft)
-            {
-                return Error.Validation("Expense.Delete.NotAllowed", "Only draft expenses can be deleted.");
-            }
-
             context.ExpExpenses.Remove(expense);
-
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "EXP_Expense",
@@ -280,30 +196,13 @@ public class ExpenseRepository(
                 action: "DELETE",
                 organizationId: expense.OrganizationId,
                 userId: expense.EmployeeId,
-                oldValue: new
-                {
-                    expense.ExpenseId,
-                    expense.OrganizationId,
-                    expense.EmployeeId,
-                    expense.CategoryId,
-                    expense.Title,
-                    expense.Amount,
-                    expense.Currency,
-                    expense.ReceiptUrl,
-                    expense.Description,
-                    expense.Status,
-                    expense.Created,
-                    expense.Modified
-                },
+                oldValue: expense,
                 newValue: null,
-                ipAddress: null,
-                userAgent: null);
+                ipAddress: null, userAgent: null
+            );
 
             await tx.CommitAsync();
-
-            response.Id = expense.ExpenseId;
-            response.RowsAffected = rowsAffected;
-            return response;
+            return new OperationResponse<EncryptedInt> { Id = expense.ExpenseId, RowsAffected = rowsAffected };
         }
         catch (Exception ex)
         {
@@ -312,13 +211,12 @@ public class ExpenseRepository(
         }
     }
 
-    public async Task<ErrorOr<GetExpenseResponse>> Get(EncryptedInt expenseId)
+    public async Task<ErrorOr<ExpenseSelectPkResponse>> Get(EncryptedInt expenseId)
     {
         var expense = await context.ExpExpenses
             .AsNoTracking()
-            .Include(x => x.Category)
             .Where(x => x.ExpenseId == expenseId.Value)
-            .Select(x => new GetExpenseResponse
+            .Select(x => new ExpenseSelectPkResponse
             {
                 ExpenseId = x.ExpenseId,
                 CategoryId = x.CategoryId,
@@ -327,7 +225,7 @@ public class ExpenseRepository(
                 Currency = x.Currency,
                 ReceiptUrl = x.ReceiptUrl,
                 Description = x.Description,
-                Status = ((ExpenseStatus)x.Status).ToString(),
+                Status = ((ExpenseStatusEnum)x.Status).ToString(),
                 Created = x.Created
             })
             .FirstOrDefaultAsync();
@@ -340,22 +238,19 @@ public class ExpenseRepository(
         return expense;
     }
 
-    public async Task<ErrorOr<ViewExpenseResponse>> View(EncryptedInt expenseId)
+    public async Task<ErrorOr<ExpenseSelectViewResponse>> View(EncryptedInt expenseId)
     {
         var expense = await context.ExpExpenses
             .AsNoTracking()
-            .Include(x => x.Category)
-            .Include(x => x.Employee)
-            .Include(x => x.CreatedByUser)
             .Where(x => x.ExpenseId == expenseId.Value)
-            .Select(x => new ViewExpenseResponse
+            .Select(x => new ExpenseSelectViewResponse
             {
                 Title = x.Title,
                 Amount = x.Amount,
                 Currency = x.Currency,
                 Description = x.Description,
                 AttachmentUrl = x.ReceiptUrl,
-                ExpenseStatus = ((ExpenseStatus)x.Status).ToString(),
+                ExpenseStatus = ((ExpenseStatusEnum)x.Status).ToString(),
                 RejectionReason = x.ExpExpenseRejections
                     .OrderByDescending(r => r.RejectedAt)
                     .Select(r => r.Reason)
@@ -363,7 +258,6 @@ public class ExpenseRepository(
                 CategoryName = x.Category.CategoryName,
                 UserDisplayName = x.Employee.DisplayName,
                 CreatedByUserDisplayName = x.CreatedByUser.DisplayName,
-                ModifiedByUserDisplayName = null,
                 Created = x.Created,
                 Modified = x.Modified
             })
@@ -381,7 +275,7 @@ public class ExpenseRepository(
         => Task.FromResult<ErrorOr<OperationResponse<EncryptedInt>>>(
             Error.Validation("Expense.Accept.Disabled", "Expense approval is performed via report approval workflow."));
 
-    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Reject(RejectExpenseRequest request)
+    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Reject(ExpenseRejectRequest request)
         => Task.FromResult<ErrorOr<OperationResponse<EncryptedInt>>>(
             Error.Validation("Expense.Reject.Disabled", "Expense rejection is performed via report approval workflow."));
 }

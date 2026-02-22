@@ -45,6 +45,6 @@ public interface IApplicationDbContext
 
     DbSet<SysAuditLog> SysAuditLogs { get; set; }
 
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     int SaveChanges();
 }

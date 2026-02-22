@@ -7,10 +7,10 @@ namespace Reimbit.Application.Expenses.Expense;
 
 public interface IExpenseService
 {
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertExpenseRequest request);
-    Task<ErrorOr<PagedResult<ListExpensesResponse>>> SelectPaage(ListExpenseRequest request);
-    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdateExpenseRequest request);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(ExpenseInsertRequest request);
+    Task<ErrorOr<PagedResult<ExpensesSelectPageResponse>>> SelectPage(ExpenseSelectPageRequest request);
+    Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(ExpenseUpdateRequest request);
     Task<ErrorOr<OperationResponse<EncryptedInt>>> Delete(EncryptedInt expenseId);
-    Task<ErrorOr<GetExpenseResponse>> Get(EncryptedInt expenseId);
-    Task<ErrorOr<ViewExpenseResponse>> View(EncryptedInt expenseId);
+    Task<ErrorOr<ExpenseSelectPkResponse>> Get(EncryptedInt expenseId);
+    Task<ErrorOr<ExpenseSelectViewResponse>> View(EncryptedInt expenseId);
 }

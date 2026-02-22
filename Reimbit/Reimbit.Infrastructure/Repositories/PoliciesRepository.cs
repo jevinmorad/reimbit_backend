@@ -11,7 +11,7 @@ namespace Reimbit.Infrastructure.Repositories;
 
 public class PoliciesRepository(IApplicationDbContext context) : IPoliciesRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertPolicyRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(PolicyInsertRequest request)
     {
         try
         {
@@ -29,7 +29,7 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
 
             await context.ExpPolicies.AddAsync(policy);
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             return new OperationResponse<EncryptedInt>
             {
@@ -43,13 +43,13 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt categoryId)
+    public async Task<ErrorOr<PagedResult<PoliciesSelectPageResponse>>> List(EncryptedInt categoryId)
     {
         var data = await context.ExpPolicies
             .AsNoTracking()
             .Where(x => x.CategoryId == categoryId)
             .Include(x => x.Category)
-            .Select(x => new ListPoliciesResponse
+            .Select(x => new PoliciesSelectPageResponse
             {
                 PolicyId = x.PolicyId,
                 CategoryId = x.CategoryId,
@@ -61,14 +61,14 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
             })
             .ToListAsync();
 
-        return new PagedResult<ListPoliciesResponse>
+        return new PagedResult<PoliciesSelectPageResponse>
         {
             Data = data,
             Total = data.Count
         };
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdatePolicyRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(PolicyUpdateRequest request)
     {
         try
         {
@@ -86,7 +86,7 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
             policy.ModifiedByUserId = request.ModifiedByUserId;
             policy.Modified = request.Modified;
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             return new OperationResponse<EncryptedInt>
             {
@@ -113,9 +113,9 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
 
             context.ExpPolicies.Remove(policy);
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             return new OperationResponse<EncryptedInt>
             {
@@ -129,14 +129,14 @@ public class PoliciesRepository(IApplicationDbContext context) : IPoliciesReposi
         }
     }
 
-    public async Task<ErrorOr<GetPolicyResponse>> Get(EncryptedInt policyId)
+    public async Task<ErrorOr<PolicySelectPKResponse>> Get(EncryptedInt policyId)
     {
         var id = (int)policyId;
 
         var policy = await context.ExpPolicies
             .AsNoTracking()
             .Where(x => x.PolicyId == id)
-            .Select(x => new GetPolicyResponse
+            .Select(x => new PolicySelectPKResponse
             {
                 PolicyId = x.PolicyId,
                 CategoryId = x.CategoryId,

@@ -8,17 +8,17 @@ namespace Reimbit.Application.Projects.Policies;
 
 public class PoliciesService(IPoliciesRepository repository) : IPoliciesService
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertPolicyRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(PolicyInsertRequest request)
     {
         return await repository.Insert(request);
     }
 
-    public async Task<ErrorOr<PagedResult<ListPoliciesResponse>>> List(EncryptedInt categoryId)
+    public async Task<ErrorOr<PagedResult<PoliciesSelectPageResponse>>> List(EncryptedInt categoryId)
     {
         return await repository.List(categoryId);
     }
 
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(UpdatePolicyRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Update(PolicyUpdateRequest request)
     {
         return await repository.Update(request);
     }
@@ -28,7 +28,7 @@ public class PoliciesService(IPoliciesRepository repository) : IPoliciesService
         return await repository.Delete(policyId);
     }
 
-    public async Task<ErrorOr<GetPolicyResponse>> Get(EncryptedInt policyId)
+    public async Task<ErrorOr<PolicySelectPKResponse>> Get(EncryptedInt policyId)
     {
         return await repository.Get(policyId);
     }

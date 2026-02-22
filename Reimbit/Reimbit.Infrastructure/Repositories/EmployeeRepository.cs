@@ -13,7 +13,7 @@ public class EmployeeRepository(
     IApplicationDbContext context
 ) : IEmployeeRepository
 {
-    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(InsertEmployeeRequest request)
+    public async Task<ErrorOr<OperationResponse<EncryptedInt>>> Insert(EmployeeInsertRequest request)
     {
         var dbContext = (DbContext)context;
 
@@ -36,7 +36,7 @@ public class EmployeeRepository(
             };
 
             context.SecUsers.Add(user);
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             var userRole = new SecUserRole
             {
@@ -77,7 +77,7 @@ public class EmployeeRepository(
                 context.SecUserManagers.Add(mapping);
             }
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
             await tx.CommitAsync();
 
             return new OperationResponse<EncryptedInt>()
@@ -164,7 +164,7 @@ public class EmployeeRepository(
                 context.SecUserManagers.Add(mapping);
             }
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
             await tx.CommitAsync();
 
             return new OperationResponse<EncryptedInt>
@@ -180,13 +180,13 @@ public class EmployeeRepository(
         }
     }
 
-    public async Task<ErrorOr<PagedResult<ListEmployeeResponse>>> List(int organizationId)
+    public async Task<ErrorOr<PagedResult<EmployeeSelectPageResponse>>> List(int organizationId)
     {
         var data = context.SecUsers
             .AsNoTracking()
             .Include(u => u.SecUserRoleUsers)
             .Where(u => u.OrganizationId == organizationId)
-            .Select(u => new ListEmployeeResponse
+            .Select(u => new EmployeeSelectPageResponse
             {
                 UserId = u.UserId,
                 DisplayName = u.DisplayName,
@@ -202,19 +202,19 @@ public class EmployeeRepository(
             }).ToList();
 
 
-        return new PagedResult<ListEmployeeResponse>
+        return new PagedResult<EmployeeSelectPageResponse>
         {
             Total = data.Count,
             Data = data
         };
     }
 
-    public async Task<ErrorOr<ViewEmployeeResponse>> View(EncryptedInt userId)
+    public async Task<ErrorOr<EmployeeSelecttViewResponse>> View(EncryptedInt userId)
     {
         var data = await context.SecUsers
             .AsNoTracking()
             .Where(u => u.UserId == (int)userId)
-            .Select(u => new ViewEmployeeResponse
+            .Select(u => new EmployeeSelecttViewResponse
             {
                 Name = u.DisplayName,
                 Role = u.SecUserRoleUsers

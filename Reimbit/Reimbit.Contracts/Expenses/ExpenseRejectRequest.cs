@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Reimbit.Contracts.Expenses;
 
-public class RejectExpenseRequest
+public class ExpenseRejectRequest
 {
     public required EncryptedInt ExpenseId { get; set; }
     public required string RejectionReason { get; set; }

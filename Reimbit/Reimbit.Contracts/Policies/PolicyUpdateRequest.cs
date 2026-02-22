@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Reimbit.Contracts.Policies;
 
-public class UpdatePolicyRequest
+public class PolicyUpdateRequest
 {
     public required EncryptedInt PolicyId { get; set; }
     public EncryptedInt? CategoryId { get; set; }

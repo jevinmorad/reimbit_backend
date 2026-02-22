@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Reimbit.Contracts.Role;
 
-public class UpdateRoleRequest
+public class RoleUpdateRequest
 {
     public int RoleID { get; set; }
     public required string RoleName { get; set; }

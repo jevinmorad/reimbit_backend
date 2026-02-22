@@ -1,6 +1,6 @@
 namespace Reimbit.Contracts.ExpenseReports;
 
-public enum ExpenseReportStatus : byte
+public enum ExpenseReportStatusEnum : byte
 {
     Open = 1,
     Submitted = 2,

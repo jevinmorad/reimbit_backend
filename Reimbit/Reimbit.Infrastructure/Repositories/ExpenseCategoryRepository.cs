@@ -29,7 +29,7 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
 
             context.ExpCategories.Add(entity);
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             return new OperationResponse<EncryptedInt>
             {
@@ -77,7 +77,7 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
             entity.ModifiedByUserId = request.ModifiedByUserId;
             entity.Modified = request.Modified;
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             return new OperationResponse<EncryptedInt>
             {
@@ -103,9 +103,9 @@ public class ExpenseCategoryRepository(ApplicationDbContext context) : IExpenseC
 
             context.ExpCategories.Remove(entity);
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             return new OperationResponse<EncryptedInt>
             {

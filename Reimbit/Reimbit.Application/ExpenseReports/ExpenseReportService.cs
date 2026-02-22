@@ -15,7 +15,7 @@ public sealed class ExpenseReportService(
 {
     private readonly CurrentUser<TokenData> currentUser = currentUserProvider.GetCurrentUser<TokenData>();
 
-    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Create(CreateExpenseReportRequest request)
+    public Task<ErrorOr<OperationResponse<EncryptedInt>>> Create(ExpenseReportInsertRequest request)
     {
         request.OrganizationId = currentUser.OrganizationId;
         request.CreatedByUserId = currentUser.UserId;
@@ -47,6 +47,6 @@ public sealed class ExpenseReportService(
         return repository.Submit(request);
     }
 
-    public Task<ErrorOr<GetExpenseReportResponse>> Get(EncryptedInt reportId)
+    public Task<ErrorOr<ExpenseReportSelectPkResponse>> Get(EncryptedInt reportId)
         => repository.Get(reportId, currentUser.OrganizationId);
 }

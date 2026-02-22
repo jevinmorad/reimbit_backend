@@ -23,7 +23,7 @@ public sealed class FinanceRepository(
             .AsNoTracking()
             .Where(r =>
                 r.OrganizationId == organizationId &&
-                r.Status == (byte)ExpenseReportStatus.Approved)
+                r.Status == (byte)ExpenseReportStatusEnum.Approved)
             .OrderBy(r => r.Created)
             .Select(r => new PayableReportResponse
             {
@@ -66,7 +66,7 @@ public sealed class FinanceRepository(
                 return Error.NotFound("ExpenseReport.NotFound", "Report not found.");
             }
 
-            if (report.Status != (byte)ExpenseReportStatus.Approved)
+            if (report.Status != (byte)ExpenseReportStatusEnum.Approved)
             {
                 return Error.Validation("Payout.NotPayable", "Only approved reports can be paid.");
             }
@@ -91,7 +91,7 @@ public sealed class FinanceRepository(
                 .Where(e => expenseIds.Contains(e.ExpenseId) && e.OrganizationId == request.OrganizationId)
                 .ToListAsync();
 
-            if (expenses.Any(e => e.Status != (byte)ExpenseStatus.Approved))
+            if (expenses.Any(e => e.Status != (byte)ExpenseStatusEnum.Approved))
             {
                 return Error.Validation("Payout.InvalidExpenseState", "All expenses must be approved before payout.");
             }
@@ -106,17 +106,17 @@ public sealed class FinanceRepository(
 
             await context.PayPayouts.AddAsync(payout);
 
-            report.Status = (byte)ExpenseReportStatus.Paid;
+            report.Status = (byte)ExpenseReportStatusEnum.Paid;
             report.ModifiedByUserId = request.ProcessedByUserId;
             report.Modified = DateTime.UtcNow;
 
             foreach (var exp in expenses)
             {
-                exp.Status = (byte)ExpenseStatus.Paid;
+                exp.Status = (byte)ExpenseStatusEnum.Paid;
                 exp.Modified = DateTime.UtcNow;
             }
 
-            var rowsAffected = await context.SaveChangesAsync(default);
+            var rowsAffected = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "PAY_Payout",
@@ -135,7 +135,7 @@ public sealed class FinanceRepository(
                 action: "REPORT_PAID",
                 organizationId: request.OrganizationId,
                 userId: request.ProcessedByUserId,
-                oldValue: new { Status = (byte)ExpenseReportStatus.Approved },
+                oldValue: new { Status = (byte)ExpenseReportStatusEnum.Approved },
                 newValue: new { Status = report.Status },
                 ipAddress: null,
                 userAgent: null);
@@ -148,8 +148,8 @@ public sealed class FinanceRepository(
                     action: "EXPENSE_PAID",
                     organizationId: request.OrganizationId,
                     userId: request.ProcessedByUserId,
-                    oldValue: new { Status = (byte)ExpenseStatus.Approved },
-                    newValue: new { Status = (byte)ExpenseStatus.Paid, ReportId = reportId },
+                    oldValue: new { Status = (byte)ExpenseStatusEnum.Approved },
+                    newValue: new { Status = (byte)ExpenseStatusEnum.Paid, ReportId = reportId },
                     ipAddress: null,
                     userAgent: null);
             }
@@ -187,7 +187,7 @@ public sealed class FinanceRepository(
                 return Error.NotFound("ExpenseReport.NotFound", "Report not found.");
             }
 
-            if (report.Status != (byte)ExpenseReportStatus.Paid)
+            if (report.Status != (byte)ExpenseReportStatusEnum.Paid)
             {
                 return Error.Validation("PayoutReverse.NotPaid", "Only paid reports can be reversed.");
             }
@@ -209,17 +209,17 @@ public sealed class FinanceRepository(
 
             foreach (var exp in expenses)
             {
-                exp.Status = (byte)ExpenseStatus.Approved;
+                exp.Status = (byte)ExpenseStatusEnum.Approved;
                 exp.Modified = DateTime.UtcNow;
             }
 
-            report.Status = (byte)ExpenseReportStatus.Approved;
+            report.Status = (byte)ExpenseReportStatusEnum.Approved;
             report.ModifiedByUserId = reversedByUserId;
             report.Modified = DateTime.UtcNow;
 
             context.PayPayouts.Remove(payout);
 
-            var rows = await context.SaveChangesAsync(default);
+            var rows = await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "PAY_Payout",
@@ -238,8 +238,8 @@ public sealed class FinanceRepository(
                 action: "REPORT_PAYOUT_REVERSED",
                 organizationId: organizationId,
                 userId: reversedByUserId,
-                oldValue: new { Status = (byte)ExpenseReportStatus.Paid },
-                newValue: new { Status = (byte)ExpenseReportStatus.Approved, Reason = reason },
+                oldValue: new { Status = (byte)ExpenseReportStatusEnum.Paid },
+                newValue: new { Status = (byte)ExpenseReportStatusEnum.Approved, Reason = reason },
                 ipAddress: null,
                 userAgent: null);
 
@@ -251,8 +251,8 @@ public sealed class FinanceRepository(
                     action: "EXPENSE_PAYOUT_REVERSED",
                     organizationId: organizationId,
                     userId: reversedByUserId,
-                    oldValue: new { Status = (byte)ExpenseStatus.Paid },
-                    newValue: new { Status = (byte)ExpenseStatus.Approved, Reason = reason, ReportId = id },
+                    oldValue: new { Status = (byte)ExpenseStatusEnum.Paid },
+                    newValue: new { Status = (byte)ExpenseStatusEnum.Approved, Reason = reason, ReportId = id },
                     ipAddress: null,
                     userAgent: null);
             }

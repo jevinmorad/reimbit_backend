@@ -22,25 +22,25 @@ public class ExpenseController(
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Create expense")]
     [HasPermission(Permission.ExpenseCreate)]
-    public async Task<IActionResult> Insert([FromBody] InsertExpenseRequest request)
+    public async Task<IActionResult> Insert([FromBody] ExpenseInsertRequest request)
     {
         var result = await service.Insert(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
     [HttpPost("SelectPage")]
-    [Produces<PagedResult<ListExpensesResponse>>]
+    [Produces<PagedResult<ExpensesSelectPageResponse>>]
     [EndpointSummary("My expenses list")]
-    public async Task<IActionResult> SelectPaage(ListExpenseRequest request)
+    public async Task<IActionResult> SelectPaage(ExpenseSelectPageRequest request)
     {
-        var result = await service.SelectPaage(request);
+        var result = await service.SelectPage(request);
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
     [HttpPut("Update")]
     [Produces<OperationResponse<EncryptedInt>>]
     [EndpointSummary("Update expense")]
-    public async Task<IActionResult> Update([FromBody] UpdateExpenseRequest request)
+    public async Task<IActionResult> Update([FromBody] ExpenseUpdateRequest request)
     {
         var result = await service.Update(request);
         return result.Match(_ => Ok(result.Value), Problem);
@@ -55,8 +55,8 @@ public class ExpenseController(
         return result.Match(_ => Ok(result.Value), Problem);
     }
 
-    [HttpGet("{id}")]
-    [Produces<GetExpenseResponse>]
+    [HttpGet("SelectPK/{id}")]
+    [Produces<ExpenseSelectPkResponse>]
     [EndpointSummary("Get expense details")]
     public async Task<IActionResult> Get(EncryptedInt id)
     {
@@ -65,7 +65,7 @@ public class ExpenseController(
     }
 
     [HttpGet("view/{id}")]
-    [Produces<ViewExpenseResponse>]
+    [Produces<ExpenseSelectViewResponse>]
     [EndpointSummary("View full expense details")]
     public async Task<IActionResult> View(EncryptedInt id)
     {

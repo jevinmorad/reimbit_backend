@@ -153,14 +153,14 @@ public sealed class ApprovalRepository(
             instance.Status = (byte)ApprovalInstanceStatus.Approved;
             instance.ActionAt = DateTime.UtcNow;
 
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             var anyPending = await context.AprApprovalInstances
                 .AnyAsync(i => i.ReportId == instance.ReportId && i.Status == (byte)ApprovalInstanceStatus.Pending);
 
             if (!anyPending)
             {
-                instance.Report.Status = (byte)ExpenseReportStatus.Approved;
+                instance.Report.Status = (byte)ExpenseReportStatusEnum.Approved;
                 instance.Report.ModifiedByUserId = approverUserId;
                 instance.Report.Modified = DateTime.UtcNow;
 
@@ -175,11 +175,11 @@ public sealed class ApprovalRepository(
 
                 foreach (var exp in expenses)
                 {
-                    exp.Status = (byte)ExpenseStatus.Approved;
+                    exp.Status = (byte)ExpenseStatusEnum.Approved;
                     exp.Modified = DateTime.UtcNow;
                 }
 
-                await context.SaveChangesAsync(default);
+                await context.SaveChangesAsync();
 
                 foreach (var exp in expenses)
                 {
@@ -189,8 +189,8 @@ public sealed class ApprovalRepository(
                         action: "EXPENSE_APPROVED",
                         organizationId: organizationId,
                         userId: approverUserId,
-                        oldValue: new { Status = (byte)ExpenseStatus.UnderApproval },
-                        newValue: new { Status = (byte)ExpenseStatus.Approved, ReportId = instance.ReportId },
+                        oldValue: new { Status = (byte)ExpenseStatusEnum.UnderApproval },
+                        newValue: new { Status = (byte)ExpenseStatusEnum.Approved, ReportId = instance.ReportId },
                         ipAddress: null,
                         userAgent: null);
                 }
@@ -278,7 +278,7 @@ public sealed class ApprovalRepository(
             instance.Status = (byte)ApprovalInstanceStatus.Rejected;
             instance.ActionAt = DateTime.UtcNow;
 
-            instance.Report.Status = (byte)ExpenseReportStatus.Open;
+            instance.Report.Status = (byte)ExpenseReportStatusEnum.Open;
             instance.Report.ModifiedByUserId = approverUserId;
             instance.Report.Modified = DateTime.UtcNow;
 
@@ -304,7 +304,7 @@ public sealed class ApprovalRepository(
 
             foreach (var exp in expenses)
             {
-                exp.Status = (byte)ExpenseStatus.Draft;
+                exp.Status = (byte)ExpenseStatusEnum.Draft;
                 exp.Modified = DateTime.UtcNow;
             }
 
@@ -322,7 +322,7 @@ public sealed class ApprovalRepository(
                 p.ActionAt = DateTime.UtcNow;
             }
 
-            await context.SaveChangesAsync(default);
+            await context.SaveChangesAsync();
 
             await auditLogger.WriteAsync(
                 entityType: "APR_ApprovalInstance",
@@ -354,8 +354,8 @@ public sealed class ApprovalRepository(
                     action: "EXPENSE_REJECTED",
                     organizationId: organizationId,
                     userId: approverUserId,
-                    oldValue: new { Status = (byte)ExpenseStatus.UnderApproval },
-                    newValue: new { Status = (byte)ExpenseStatus.Draft, ReportId = instance.ReportId, Reason = reason },
+                    oldValue: new { Status = (byte)ExpenseStatusEnum.UnderApproval },
+                    newValue: new { Status = (byte)ExpenseStatusEnum.Draft, ReportId = instance.ReportId, Reason = reason },
                     ipAddress: null,
                     userAgent: null);
             }
